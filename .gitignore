@@ -1,11 +1,11 @@
-./data/raw/*
-./data/processed/*
+data/raw/
+data/processed/
 
-./build
-./manuscript
-./stan
-./tmp
+build/
+manuscript/
+stan/
+tmp/
 
-./wildfire_analysis.egg-info
-./**/__pycache__
-./**/.ipynb_checkpoints
+wildfire_analysis.egg-info/
+**/__pycache__
+**/.ipynb_checkpoints
