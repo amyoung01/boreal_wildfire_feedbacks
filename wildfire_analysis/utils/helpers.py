@@ -72,52 +72,6 @@ def extract_str_parts(filelist,extension='',sep='_'):
     
     return filename_parts
 
-def overlap(x,lims,format='%Y-%m-%d',index_return = False):
-
-    if (type(x) is list):
-
-        x = np.array(x)
-
-    if x.size == 2:
-
-        if (type(x) is str):
-
-            x = [dt.datetime.strptime(x[0],format), \
-                 dt.datetime.strptime(x[1],format)]
-
-        bool_1 = (x[0] < lims[0]) & (x[1] > lims[1])
-        bool_2 = (x[0] > lims[1]) & (x[0] < lims[1])
-        bool_3 = (x[1] > lims[1]) & (x[1] < lims[1])
-
-        overlap_bool = bool_1 | bool_2 | bool_3
-
-    else:
-
-        overlap_bool = np.zeros((x.shape[0],),dtype=bool)
-
-        for i in range(0,len(x)):
-
-            if (type(x[i,0]) is str):
-                
-                x_a = [dt.datetime.strptime(x[i,0],format), \
-                       dt.datetime.strptime(x[i,1],format)]
-
-            else:
-
-                x_a = x[i,:]
-
-            bool_1 = (x_a[0] < lims[0]) & (x_a[1] > lims[1])
-            bool_2 = (x_a[0] > lims[0]) & (x_a[0] < lims[1])
-            bool_3 = (x_a[1] > lims[0]) & (x_a[1] < lims[1])
-
-            overlap_bool[i] = bool_1 | bool_2 | bool_3
-
-    if index_return:
-
-        overlap_bool = np.flatnonzero(overlap_bool)
-
-    return overlap_bool
-
 def get_geoaxes(ds,coord_axes=None):
 
     if coord_axes is None:
@@ -195,15 +149,7 @@ def regrid_geodata(ds,target_coords,method='linear',**kwargs):
 
     # Get axes for current xarray dataset. Will return empty dict if not 
     # available
-    axes = ds.cf.axes
-
-    # Test to make sure it hax 'X' and 'Y' axes. If it doesn't assign the coord
-    # names 'lon' and 'lat' to 'X' and 'Y', respectively
-    try:
-        axes['X']
-        axes['Y']
-    except:
-        axes = {'X': ['lon'],'Y': ['lat']}
+    axes = get_geoaxes(ds)
 
     # Get x and y coordinate values
     x,y = get_geocoords(target_coords,**kwargs)
