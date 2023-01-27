@@ -1,18 +1,18 @@
-import os
 import geopandas as gpd
 
-# Set working directory of current project
-WDIR = '/Users/adam/projects/test/boreal_wildfire_feedbacks'
+from wildfire_analysis.config import root_dir, raw_data_dir, ancillary_data_dir
 
-# Ecoregion IDs to keep in study area
+# Ecoregion IDs to keep in study area. Predetermined from evaluation of 
+# ecoregions map
 ecos_to_keep = {'ECO_ID': [50602.0,50603.0,50604.0,50605.0,50606.0,50607.0,
     50608.0,50609.0,50610.0,50612.0,50613.0,50614.0,50616.0,50617.0,51111.0]}
 
 # Read in shapefile with ecoregion perimeters ('ecos') and a shapefile with 
 # polygons to ultimately remove from study area. The polygons to remove were
 # identified and exported using QGIS 3.28.
-ecos = gpd.read_file(os.path.join(WDIR,'data/raw/ecoregions/official/wwf_terr_ecos.shp'))
-poly_to_remove = gpd.read_file(os.path.join(WDIR,'tmp/to_remove_east_can.shp'))
+fn = raw_data_dir / 'ecoregions/official/wwf_terr_ecos.shp'
+ecos = gpd.read_file(fn)
+poly_to_remove = gpd.read_file(root_dir/ 'tmp/to_remove_east_can.shp')
 
 # Subset world ecoregions map to those only in study area.
 match_ecos_id = ecos.isin(ecos_to_keep)
@@ -42,4 +42,4 @@ ecos_subset.loc[ecos_subset.ECO_ID == 50617.0,'ECO_ID'] = 50613.0
 ecos_subset = ecos_subset.dissolve(by='ECO_ID',as_index=False)
 
 # Export ecoregions map for use in analysis.
-ecos_subset.to_file(os.path.join(WDIR,'ancillary/ecos.shp'))
+ecos_subset.to_file(ancillary_data_dir / 'ecos.shp')
