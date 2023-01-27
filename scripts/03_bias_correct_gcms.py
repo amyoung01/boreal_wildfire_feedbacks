@@ -33,13 +33,13 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
 
             for sim_yr in sim_periods:
                 
-                ref_src = [list(refdir.glob('%s*%d*' % (var,i)))[0] \
+                ref_src = [list(refdir.glob("%s*%d*" % (var,i)))[0] \
                     for i in range(hst_yr[0],hst_yr[1]+1)]
 
-                hst_src = [list(wdir.glob('%s*%d*' % (var,i)))[0] \
+                hst_src = [list(wdir.glob("%s*%d*" % (var,i)))[0] \
                     for i in range(hst_yr[0],hst_yr[1]+1)]
 
-                sim_src = [list(wdir.glob('%s*%d*' % (var,i)))[0] \
+                sim_src = [list(wdir.glob("%s*%d*" % (var,i)))[0] \
                     for i in range(sim_yr[0],sim_yr[1]+1)]
 
                 if sim_yr == sim_periods[0]:
@@ -62,22 +62,28 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
 
                 if hst_return_bool:
 
-                    hst_ba = qdm[0].compute()
+                    hst_ba = qdm[0]
+                    hst_ba = hst_ba.compute()
 
                     for yr in range(hst_yr[0],hst_yr[1]+1):
 
-                        fn = dest / ('%s_%s_%d.nc' % (var,gcm,yr))
+                        fn = dest / ("%s_%s_%d.nc" % (var,gcm,yr))
                         yr_slice = slice(str(yr),str(yr))
-                        hst_ba.sel(time=yr_slice).to_netcdf(fn,engine='h5netcdf')
+                        export_ds = hst_ba.sel(time=yr_slice)
+                        export_ds = export_ds.astype('float32')
+                        export_ds.to_netcdf(fn,engine='h5netcdf')
                     
                     del hst_ba
                 
-                sim_ba = qdm[-1].compute()
+                sim_ba = qdm[-1]
+                sim_ba = sim_ba.compute()
 
                 for yr in range(sim_yr[0],sim_yr[1]+1):
 
-                    fn = dest / ('%s_%s_%d.nc' % (var,gcm,yr))
+                    fn = dest / ("%s_%s_%d.nc" % (var,gcm,yr))
                     yr_slice = slice(str(yr),str(yr))
-                    sim_ba.sel(time=yr_slice).to_netcdf(fn,engine='h5netcdf')
+                    export_ds = sim_ba.sel(time=yr_slice)
+                    export_ds = export_ds.astype('float32')
+                    export_ds.to_netcdf(fn,engine='h5netcdf')
 
                 pbar.update()

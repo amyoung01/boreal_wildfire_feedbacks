@@ -26,7 +26,7 @@ def check_var_names(*args):
     var_names = [h.get_var_names(x)[0] for x in args]
 
     if not same_vals(var_names):
-        raise Exception('Data variables need to be the same in all datasets.')
+        raise Exception("Data variables need to be the same in all datasets.")
 
     return var_names[0]
 
@@ -35,7 +35,7 @@ def same_units(*args):
     units = [str2pint(x.units).units for x in args]
 
     if not same_vals(units):
-        raise Exception('Units need to be the same in all datasets')
+        raise Exception("Units need to be the same in all datasets.")
 
     return None
 
@@ -47,13 +47,12 @@ def dimcheck_and_regrid(ref,hst,sim,regrid='era2gcm'):
 
     shape_check_1 = same_vals([ref_shape,hst_shape,sim_shape])
 
-    # If datasets are not the same size then regridding needs to be done
-    
+    # If datasets are not the same size then regridding needs to be done   
     if not shape_check_1: # If datasets are not the same size ...
 
         if not any([regrid=='era2gcm',regrid=='gcm2era']):
-            raise Exception('Array shapes not equal, need to do regridding and \
-                regrid argument needs to be either era2gcm or gcm2era')
+            raise Exception("Array shapes not equal, need to do regridding and \
+                'regrid' argument needs to be either 'era2gcm' or 'gcm2era'")
 
         if regrid == 'era2gcm':
             
@@ -72,8 +71,8 @@ def dimcheck_and_regrid(ref,hst,sim,regrid='era2gcm'):
         # sure time dims are the same size across datasets
         
         if not same_vals([ref_shape,hst_shape,sim_shape]):
-            raise Exception('ref,hst,sim array shapes are not equal! \
-                Double check input. Time dimensions need to be same as well.')
+            raise Exception("ref,hst,sim array shapes are not equal! \
+                Double check input. Time dimensions need to be same as well.")
 
     return (ref,hst,sim)                 
 
@@ -174,18 +173,23 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
     # Will raise Exception if not all the same.
     same_units(ref,hst,sim)
     
+    # Do regridding so all data arrays are aligned and have the same shape and
+    # dimensions
     ref, hst, sim = dimcheck_and_regrid(ref,hst,sim,
         **h.get_kwargs(('regrid',),kwargs))
 
+    # Apply spatial mask, does nothing if 'mask=None'
     ref, hst, sim = mask_arrays(ref,hst,sim,
         **h.get_kwargs(('mask',),kwargs))
 
+    # If working with dask arrays, set chunks so time dimension is not broken up
+    # This is a requirement for using sdba.QuantileDeltaMapping
     if dask_load:
         ref, hst, sim = chunk_data_arrays(ref,hst,sim,
             **h.get_kwargs(('frac',),kwargs))
 
-    # Apply unifor random variable if value is less then preset amount. Mainly
-    # used for precip (0.5 mm/day)
+    # Apply uniform random variable if value is less then preset amount. Mainly
+    # used for precip (e.g., 0.5 mm/day)
     if min_thresh is not None:
 
         thresh_str = "%0.3f %s" % (min_thresh,ref.attrs['units'])
@@ -194,7 +198,7 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
         hst = jitter_under_thresh(hst,thresh_str)
         sim = jitter_under_thresh(sim,thresh_str)    
 
-    # Train Quantile delta mapping model
+    # Training step in Quantile delta mapping
     QDM = QuantileDeltaMapping.train(ref,hst,
         **h.get_kwargs(('group','nquantiles','kind'),kwargs))        
 
@@ -204,9 +208,11 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
     # Only do historical bias corrections if return_hist=True
     if return_hst:
 
+        # Bias correcting step for hst time period
         hst_ba = QDM.adjust(hst,
             **h.get_kwargs(('interp','extrapolation'),kwargs))
 
+        # Set all jittered values back to 0
         if min_thresh is not None:
 
             hst_ba = xr.where(hst_ba > min_thresh,hst_ba,0.0)
@@ -216,9 +222,11 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
 
         return_ds = return_ds + tuple([hst_ba])
 
+    # Bias correcting step for projected/simulated time period
     sim_ba = QDM.adjust(sim,
         **h.get_kwargs(('interp','extrapolation'),kwargs))
 
+    # Set all jittered values back to 0
     if min_thresh is not None:
 
         sim_ba = xr.where(sim_ba > min_thresh,sim_ba,0.0)
