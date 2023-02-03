@@ -9,6 +9,7 @@ from keyword import kwlist
 import os
 import pathlib
 
+import cf_xarray
 import geopandas as gpd
 import numpy as np
 import shapely.vectorized
@@ -75,15 +76,13 @@ def extract_str_parts(filelist,extension='',sep='_'):
 def get_geoaxes(ds,coord_axes=None):
 
     if coord_axes is None:
-        axes = ds.cf.axes
-    else:
-        axes = coord_axes
 
-    try:
-        axes['X']
-        axes['Y']
-    except:
-        axes = {'X': ['lon'],'Y': ['lat']}
+        try:
+            axes = ds.cf.axes
+            axes['X']
+            axes['Y']
+        except:
+            axes = {'X': ['lon'],'Y': ['lat']}
 
     return axes
 
@@ -165,7 +164,14 @@ def regrid_geodata(ds,target_coords,method='linear',**kwargs):
 
 def mask_from_shp(shpfile,grd_coords,**kwargs):
 
-    mask_vct = gpd.read_file(shpfile)
+    if isinstance(shpfile,pathlib.PosixPath) or isinstance(shpfile,str):
+
+        mask_vct = gpd.read_file(shpfile)
+
+    else: 
+
+        mask_vct = shpfile
+
     x,y = coords_to_mesh(grd_coords,**kwargs)
 
     mask_geom = mask_vct.dissolve().geometry.item()
