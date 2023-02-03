@@ -76,12 +76,6 @@ def process_sfcWind(da):
     
     return da
 
-def process_pr(da):
-
-     da = xc.units.convert_units_to(da,'mm/day')
-
-     return da
-
 def process_hursmin(da):
 
     da = da.clip(min=0.0,max=100.0)
