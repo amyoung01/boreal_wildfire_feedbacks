@@ -209,6 +209,58 @@ def dsr_calc(fwi):
 
 def cffdrs_calc(tas,pr,sfcWind,hurs,mon,ffmc0=85.0,dmc0=6.0,dc0=15.0):
 
+    """
+    Description
+    -----------
+    Computes CFFDRS Indices using near-surface air temperature (tas,[degC]), 
+    total precipitation (pr,[mm/day]), 10-metre wind speed (sfcWind,[km/hour]), 
+    and near-surface relative humidity (hurs,[%]).
+
+    Parameters
+    ----------
+    tas: float or numpy array of floats
+        Near-surface (i.e. 2-m) air temperature in degrees Celsius
+    pr: float or numpy array of floats
+        Total daily precipitation in mm/day
+    sfcWind: float or numpy array of floats
+        10-m wind speed in km/hour
+    hurs: float or numpy array of floats
+        Near-surface relative humidity in percent (%). Bound between 0-100
+    mon: int or numpy array of integers
+        Month values (1-12) for each day of year included in input array
+    ffmc0: float or numpy array of floats, optional
+        Fine Fuel Moisture Code for previous day. If not given assumed to be 
+        85.0 for first day, and the rest of the calculations proceed through
+        time using the previous days ffmc values as they are calculated
+    dmc0: float or numpy array of floats, optional
+        Duff Moisture Code for previous day. If not given assumed to be 
+        6.0 for first day, and the rest of the calculations proceed through
+        time using the previous days ffmc values as they are calculated
+    dc0: float or numpy array of floats, optional
+        Drought Code for previous day. If not given assumed to be 
+        15.0 for first day, and the rest of the calculations proceed through
+        time using the previous days ffmc values as they are calculated
+
+    Returns
+    -------
+    dict
+        A dictionary with the following keys:
+            ffmc: float or numpy array of floats
+                Fine fuel moisture code
+            dmc: float or numpy array of floats
+                Duff moisture code
+            dc: float or numpy array of floats
+                Drought code
+            isi: float or numpy array of floats
+                Initial spread index [unitless]
+            bui: float or numpy array of floats
+                Build-up index [unitless]
+            fwi: float or numpy array of floats
+                Fire weather index [unitless]
+            dsr: float or numpy array of floats
+                Daily severity rating [unitless]
+    """
+
     # Create empty arrays to store cffdrs variables
     arr_shape = tas.shape
 
@@ -225,14 +277,19 @@ def cffdrs_calc(tas,pr,sfcWind,hurs,mon,ffmc0=85.0,dmc0=6.0,dc0=15.0):
     for i in range(ndays):
 
         ffmc[i,...] = ffmc_calc(
-            tas[i,...],pr[i,...],sfcWind[i,...],hurs[i,...],
-            ffmc0)
-        dmc[i,...] = dmc_calc(tas[i,...],pr[i,...],hurs[i,...],mon[i]-1,dmc0)
-        dc[i,...] = dc_calc(tas[i,...],pr[i,...],mon[i]-1,dc0)
-        isi[i,...] = isi_calc(ffmc[i,...],sfcWind[i,...])
-        bui[i,...] = bui_calc(dmc[i,...],dc[i,...])
-        fwi[i,...] = fwi_calc(isi[i,...],bui[i,...])
-        dsr[i,...] = dsr_calc(fwi[i,...])
+            tas[i,...],pr[i,...],sfcWind[i,...],hurs[i,...],ffmc0)
+        dmc[i,...] = dmc_calc(
+            tas[i,...],pr[i,...],hurs[i,...],mon[i]-1,dmc0)
+        dc[i,...] = dc_calc(
+            tas[i,...],pr[i,...],mon[i]-1,dc0)
+        isi[i,...] = isi_calc(
+            ffmc[i,...],sfcWind[i,...])
+        bui[i,...] = bui_calc(
+            dmc[i,...],dc[i,...])
+        fwi[i,...] = fwi_calc(
+            isi[i,...],bui[i,...])
+        dsr[i,...] = dsr_calc(
+            fwi[i,...])
 
         if i > 0:
             ffmc0 = ffmc[i,...]
