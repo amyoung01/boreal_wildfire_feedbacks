@@ -4,7 +4,7 @@ import sys
 from tqdm import tqdm
 import yaml
 
-from wildfire_analysis.data.process_cmip6 import process_cmip
+from wildfire_analysis.data.process_cmip6 import process_cmip6
 
 # Get global values from configuration file
 config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
@@ -49,7 +49,7 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
 
                 src = list(wdir.glob('%s*nc' % var))
 
-            ds = process_cmip(src)
+            ds = process_cmip6(src)
             ds = ds.compute()
 
             for yr in cmip6_yr:
