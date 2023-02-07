@@ -1,15 +1,27 @@
+from pathlib import Path
 import sys
 
 from tqdm import tqdm
+import yaml
 
 from wildfire_analysis.data.process_cmip6 import process_cmip
-from wildfire_analysis.config import raw_data_dir, processed_data_dir, \
-    gcm_list, metvars, cmip6_yr
+
+# Get global values from configuration file
+config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
+with open(config_fn,'r') as config_file:
+    config_params = yaml.safe_load(config_file)
+
+raw_data_dir = Path(config_params['PATHS']['raw_data_dir'])
+processed_data_dir = Path(config_params['PATHS']['processed_data_dir'])
+gcm_list = config_params['CLIMATE']['gcm_list']
+metvars = config_params['CLIMATE']['metvars']
+cmip6_yr = config_params['TIME']['cmip6_yr']
 
 verbose = False
 if sys.argv[-1] == '--verbose':
     verbose = True
 
+# Convert to range
 cmip6_yr = range(cmip6_yr[0],cmip6_yr[1]+1)
 
 # ERA5 file to extract lat/lon coords and use for regridding
@@ -29,7 +41,7 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
         
         for var in metvars:
 
-            if (var == 'sfcWind') & (gcm != 'ACCESS-CM2'):
+            if (var == 'sfcWind'):
 
                 src = list(wdir.glob('?as_*nc'))
 
