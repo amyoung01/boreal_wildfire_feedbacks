@@ -1,11 +1,29 @@
+from pathlib import Path
 import sys
 
 import numpy as np
 from tqdm import tqdm
+import yaml
 
-from wildfire_analysis.config import ancillary_data_dir, processed_data_dir, \
-    gcm_list, metvars, hst_yr, sim_periods, oper, min_thresh, quantile_vals
-from wildfire_analysis.data.quantile_delta_mapping import quantile_delta_mapping
+from wildfire_analysis.data.quantile_delta_mapping \
+    import quantile_delta_mapping
+
+# Get global values from configuration file
+config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
+
+with open(config_fn,'r') as config_file:
+
+    config_params = yaml.safe_load(config_file)
+
+    ancillary_data_dir = config_params['PATHS']['ancillary_data_dir']
+    processed_data_dir = config_params['PATHS']['processed_data_dir']
+    gcm_list = config_params['CLIMATE']['gcm_list']
+    metvars = config_params['CLIMATE']['metvars']
+    hst_yr = config_params['TIME']['hst_yr']
+    sim_periods = config_params['TIME']['sim_periods']
+    oper = config_params['QDM']['oper']
+    min_thresh = config_params['QDM']['min_thresh']
+    quantile_vals = config_params['QDM']['quantile_vals']
 
 verbose = False
 if sys.argv[-1] == '--verbose':
@@ -17,7 +35,7 @@ refdir = processed_data_dir / 'climate/era5'
 
 quantile_vals = np.array(quantile_vals)
 
-N = len(gcm_list) * len(metvars) * len(sim_periods)
+N = len(gcm_list)*len(metvars)*len(sim_periods)
 
 with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
 
@@ -47,7 +65,8 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
                 else:
                     hst_return_bool = False
 
-                qdm = quantile_delta_mapping(ref_src,hst_src,sim_src,
+                qdm = quantile_delta_mapping(
+                    ref_src,hst_src,sim_src,
                     dask_load=True,
                     regrid='gcm2era',
                     mask=shpfile,

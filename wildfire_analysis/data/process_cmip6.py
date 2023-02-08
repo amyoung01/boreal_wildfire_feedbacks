@@ -1,18 +1,12 @@
 """
-
-1. Drop unecessary variables
-2. Convert lon limits to -180 thru 180 instead of 0-360
-3. Clip geographic limits of gcm
-4. Convert to 'noleap' calendar
-5. Convert units (if necessary)
-6. Export files for variables for single year
-
+This module provides a set of functions to read in, organize, do unit
+conversions on, and export GCM data needed for analysis.
 """
 
 from pathlib import Path
 
 import dask
-from numpy import square, sqrt # For calculating wind speed from u and v vectors
+from numpy import square, sqrt # For wind speed from u and v vectors calcs
 import xarray as xr
 import xclim as xc # For unit conversions
 import yaml
@@ -20,11 +14,13 @@ import yaml
 from wildfire_analysis.utils import helpers as h
 
 # Get global values from configuration file
-config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
-with open(config_fn,'r') as config_file:
-    config_params = yaml.safe_load(config_file)
+config_fn = Path(__file__).parent / '../config.yaml'
 
-geo_lims = config_params['CLIMATE']['geo_lims']
+with open(config_fn,'r') as config_file:
+
+    config_params = yaml.safe_load(config_file)
+    
+    geo_lims = config_params['CLIMATE']['geo_lims']
 
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
@@ -95,22 +91,22 @@ def _process_hursmin(da):
 def process_cmip6(src):
 
     da = xr.open_mfdataset(
-            src,
-            parallel=True,
-            engine='h5netcdf',
-            combine_attrs='drop_conflicts',
-            mask_and_scale=True,
-            )
+        src,
+        parallel=True,
+        engine='h5netcdf',
+        combine_attrs='drop_conflicts',
+        mask_and_scale=True,
+        )
 
     attrs = da.attrs
 
     n,p = (da['lat'].size,da['lon'].size)
 
     da = da.chunk(chunks={
-            'time': 365,
-            'lat': round(n/2),
-            'lon': round(p/2),
-            })
+        'time': 365,
+        'lat': round(n/2),
+        'lon': round(p/2),
+        })
 
     da = _organize_cmip(da)
 
@@ -122,7 +118,8 @@ def process_cmip6(src):
     if standard_name == 'precipitation_flux':
         da = _process_pr(da['pr'])
 
-    if (standard_name == 'eastward_wind') | (standard_name == 'northward_wind'):
+    if (standard_name == 'eastward_wind' or
+        standard_name == 'northward_wind'):
         da = _process_sfcWind_from_uv(da) # Calculate from u and v vectors
         da = _process_sfcWind(da) # Convert to km/hour
 
