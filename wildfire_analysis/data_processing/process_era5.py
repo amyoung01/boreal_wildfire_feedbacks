@@ -1,15 +1,31 @@
+"""
+This module provides a set of functions to read in, organize, do unit
+conversions on, and export ERA5 data needed for analysis.
+"""
+
+from pathlib import Path
+
 import dask
 import numpy as np
 import xclim as xc
 import xarray as xr
+import yaml
 
-from wildfire_analysis.config import geo_lims
 from wildfire_analysis.utils import helpers as h
+
+# Get global values from configuration file
+config_fn = Path(__file__).parent / '../config.yaml'
+
+with open(config_fn,'r') as config_file:
+
+    config_params = yaml.safe_load(config_file)
+    
+    geo_lims = config_params['CLIMATE']['geo_lims']
 
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
 
-def calc_tasmax(da,dask_compute=False):
+def _calc_tasmax(da,dask_compute=False):
 
     da = xc.units.convert_units_to(da,'degC') # [degC]
 
@@ -24,7 +40,7 @@ def calc_tasmax(da,dask_compute=False):
 
     return tasmax
 
-def calc_pr(da,dask_compute=False):
+def _calc_pr(da,dask_compute=False):
 
     da = xc.units.convert_units_to(da,'mm') # [mm]
 
@@ -38,7 +54,7 @@ def calc_pr(da,dask_compute=False):
 
     return pr
 
-def calc_sfcWind(ds,dask_compute=False):
+def _calc_sfcWind(ds,dask_compute=False):
 
     u10 = ds['u10']
     v10 = ds['v10']
@@ -58,7 +74,7 @@ def calc_sfcWind(ds,dask_compute=False):
 
     return sfcWind
 
-def vapor_pressure(T):
+def _vapor_pressure(T):
 
     if xc.units.str2pint(T.units).units == 'kelvin':
         T = xc.units.convert_units_to(T,'degC')
@@ -71,12 +87,12 @@ def vapor_pressure(T):
 
     return vp
 
-def calc_hursmin(ds,dask_compute=False):
+def _calc_hursmin(ds,dask_compute=False):
 
     tas = ds['t2m']
     tdps = ds['d2m']
 
-    hurs = 100 * vapor_pressure(tdps) / vapor_pressure(tas) # [%]
+    hurs = 100 * _vapor_pressure(tdps) / _vapor_pressure(tas) # [%]
     hurs.attrs['long_name'] = '2 metre relative humidity'
     hurs.name = 'hurs'
     hurs.attrs = {'units':'%','long_name':'2 metre minimum relative humidity'}
@@ -90,17 +106,17 @@ def calc_hursmin(ds,dask_compute=False):
 
     return hursmin
 
-def organize_era5(ds):
+def _organize_era5(ds):
 
     global_attrs = {'source_id': 'ERA5',
         'url': 'https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5',
         'history': 'Original data downloaded Jan 7-13,2022 in netcdf format. \
         Converted to netcdf4 using netCDF library version 4.8.1.'}
     
-    ds = ds.rename(
-        {'longitude': 'lon',
-        'latitude': 'lat'}
-        )
+    ds = ds.rename({
+        'longitude': 'lon',
+        'latitude': 'lat',
+        })
 
     ds = h.trim_geolims(ds,geo_lims)
 
@@ -130,7 +146,7 @@ def process_era5(src,dask_load=False):
         src,
         parallel=dask_load,
         engine='h5netcdf',
-        mask_and_scale=True
+        mask_and_scale=True,
         )
     
     varnames = h.get_var_names(ds) #list(ds.keys())
@@ -142,11 +158,16 @@ def process_era5(src,dask_load=False):
 
     if any([x == 't2m' for x in varnames]):
         tasmax_bool = True
+
     if any([x == 'tp' for x in varnames]):
         pr_bool = True
-    if any([x == 'u10' for x in varnames]) & any([x == 'v10' for x in varnames]):
+
+    if any([x == 'u10' for x in varnames]) and \
+       any([x == 'v10' for x in varnames]):
         sfcWind_bool = True
-    if any([x == 't2m' for x in varnames]) & any([x == 'd2m' for x in varnames]):
+
+    if any([x == 't2m' for x in varnames]) and \
+       any([x == 'd2m' for x in varnames]):
         hursmin_bool = True
 
     export_dict = {}
@@ -154,21 +175,24 @@ def process_era5(src,dask_load=False):
     # Create xarray dataset object, easier to do these daily summaries using 
     # groupby.
     if tasmax_bool:
-        tasmax = calc_tasmax(ds['t2m'],dask_compute=dask_load)
+        tasmax = _calc_tasmax(ds['t2m'],dask_compute=dask_load)
         export_dict.update({'tasmax': tasmax})
+
     if pr_bool:
-        pr = calc_pr(ds['tp'],dask_compute=dask_load)
+        pr = _calc_pr(ds['tp'],dask_compute=dask_load)
         export_dict.update({'pr': pr})    
+
     if sfcWind_bool:
-        sfcWind = calc_sfcWind(ds[['u10','v10']],dask_compute=dask_load)
+        sfcWind = _calc_sfcWind(ds[['u10','v10']],dask_compute=dask_load)
         export_dict.update({'sfcWind': sfcWind})
+
     if hursmin_bool:
-        hursmin = calc_hursmin(ds[['t2m','d2m']],dask_compute=dask_load)
+        hursmin = _calc_hursmin(ds[['t2m','d2m']],dask_compute=dask_load)
         export_dict.update({'hursmin': hursmin})
 
     daily_ds = xr.merge([export_dict]) # Put dict in brackets to make iterable
 
-    daily_ds = organize_era5(daily_ds) # Final re-arrangement/renaming of coords
+    daily_ds = _organize_era5(daily_ds) # Final re-arrangement of coords
 
     return daily_ds
 

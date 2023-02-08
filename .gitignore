@@ -8,6 +8,8 @@ manuscript/
 stan/
 tmp/
 
+R/MBC_Rscript.R
+
 wildfire_analysis.egg-info/
 **/__pycache__
 **/.ipynb_checkpoints

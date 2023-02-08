@@ -4,7 +4,7 @@ import sys
 from tqdm import tqdm
 import yaml
 
-from wildfire_analysis.data.process_cmip6 import process_cmip6
+from wildfire_analysis.data_processing.process_cmip6 import process_cmip6
 
 # Get global values from configuration file
 config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'

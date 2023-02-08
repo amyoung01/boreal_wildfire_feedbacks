@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import yaml
 
-from wildfire_analysis.data.quantile_delta_mapping \
+from wildfire_analysis.data_processing.quantile_delta_mapping \
     import quantile_delta_mapping
 
 # Get global values from configuration file

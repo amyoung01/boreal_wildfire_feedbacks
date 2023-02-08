@@ -4,7 +4,7 @@ import sys
 from tqdm import tqdm
 import yaml
 
-from wildfire_analysis.data.process_era5 import process_era5
+from wildfire_analysis.data_processing.process_era5 import process_era5
 from wildfire_analysis.utils import helpers as h
 
 # Get global values from configuration file

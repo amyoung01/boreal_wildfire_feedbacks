@@ -90,8 +90,6 @@ if verbose:
     print('Processing and calculating CFFDRS indices for CMIP6 GCMs .....')
     print('--------------------------------------------------------------')
 
-gcm_list = gcm_list[:-1]
-
 with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
 
     for gcm in gcm_list:
