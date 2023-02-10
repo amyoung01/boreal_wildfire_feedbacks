@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+#%% Import libraries
 from pathlib import Path
 import sys
 
@@ -7,14 +10,17 @@ import yaml
 from wildfire_analysis.data_processing.process_era5 import process_era5
 from wildfire_analysis.utils import helpers as h
 
+#%% Import config file and read in parameters needed for data processing
 # Get global values from configuration file
-config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
+root_dir = Path(h.get_root_dir())
+config_fn = root_dir / 'config.yaml'
+
 with open(config_fn,'r') as config_file:
     config_params = yaml.safe_load(config_file)
 
-raw_data_dir = Path(config_params['PATHS']['raw_data_dir'])
-processed_data_dir = Path(config_params['PATHS']['processed_data_dir'])
-era5_yr = config_params['TIME']['era5_yr']
+    raw_data_dir = root_dir / config_params['PATHS']['raw_data_dir']
+    processed_data_dir = root_dir / config_params['PATHS']['processed_data_dir']
+    era5_yr = config_params['TIME']['era5_yr']
 
 verbose = False
 if (sys.argv[-1] == "--verbose"):

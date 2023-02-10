@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+#%% Import libraries
 from pathlib import Path
 import sys
 
@@ -7,16 +10,19 @@ import yaml
 
 from wildfire_analysis.data_processing.quantile_delta_mapping \
     import quantile_delta_mapping
+from wildfire_analysis.utils import helpers as h
 
+#%% Import config file and read in parameters needed for data processing
 # Get global values from configuration file
-config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
+root_dir = Path(h.get_root_dir())
+config_fn = root_dir / 'config.yaml'
 
 with open(config_fn,'r') as config_file:
 
     config_params = yaml.safe_load(config_file)
 
-    ancillary_data_dir = config_params['PATHS']['ancillary_data_dir']
-    processed_data_dir = config_params['PATHS']['processed_data_dir']
+    ancillary_data_dir = root_dir / config_params['PATHS']['ancillary_data_dir']
+    processed_data_dir = root_dir / config_params['PATHS']['processed_data_dir']
     gcm_list = config_params['CLIMATE']['gcm_list']
     metvars = config_params['CLIMATE']['metvars']
     hst_yr = config_params['TIME']['hst_yr']
@@ -25,6 +31,7 @@ with open(config_fn,'r') as config_file:
     min_thresh = config_params['QDM']['min_thresh']
     quantile_vals = config_params['QDM']['quantile_vals']
 
+#%% If verbose=True then have progress bar document processing time
 verbose = False
 if sys.argv[-1] == '--verbose':
     verbose = True
@@ -44,7 +51,7 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
         wdir = processed_data_dir / 'climate/cmip6' / gcm
         dest = processed_data_dir / 'climate/cmip6' / gcm / 'bias_corrected'
 
-        if not dest.exists():
+        if dest.exists() is False:
             dest.mkdir(parents=True)
         
         for var in metvars:
