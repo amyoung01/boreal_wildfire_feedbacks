@@ -115,17 +115,17 @@ ogr2ogr -f "ESRI Shapefile" \
 # Remove/delete temporary files
 rm $DEST/tmp*
 
-# ###############################################################################
-# # Process Canada fire history
-# # ---------------------------
-# # In the next steps for the Alaska fire dataset:
-# #  1. Reproject Canada fire shapefile to predetermined spatial reference system
-# #  2. Rename FIREYEAR to FIREYR to match AK shapefile
-# #  3. Convert SIZE_HA attribute to ACRES by multiplying by a factor of 2.471
-# #  4. Select all fire years between 1950-2020. Downloaded shapefile already
-# #     filters for large fires > 200 ha
-# #  3. Trim fields in shapefile to only FIREYR and ACRES
-# ###############################################################################
+###############################################################################
+# Process Canada fire history
+# ---------------------------
+# In the next steps for the Alaska fire dataset:
+#  1. Reproject Canada fire shapefile to predetermined spatial reference system
+#  2. Rename FIREYEAR to FIREYR to match AK shapefile
+#  3. Convert SIZE_HA attribute to ACRES by multiplying by a factor of 2.471
+#  4. Select all fire years between 1950-2020. Downloaded shapefile already
+#     filters for large fires > 200 ha
+#  3. Trim fields in shapefile to only FIREYR and ACRES
+###############################################################################
 
 cd $CAN_DIR
 
