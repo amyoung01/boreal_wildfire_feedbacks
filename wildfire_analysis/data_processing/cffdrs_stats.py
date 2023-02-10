@@ -1,6 +1,30 @@
+"""
+Description
+-----------
+This set of functions calculates annual CFFDRS statistical summaries that 
+capture different aspects of extreme fire weather conditions. The four 
+statistical summaries are based on Abatzoglou et al (2018):
+
+  - fire weather season length (fwsl)
+  - max fire weather anomaly (max)
+  - number of days that exceed historical 95th percentile (95d)
+  - peak fire weather values for fire season (fs)
+
+Reference
+---------
+Abatzoglou, J. T., Williams, A. P., & Barbero, R. (2019). Global emergence 
+    of anthropogenic climate change in fire weather indices. Geophysical 
+    Research Letters, 46, 326–336. https://doi.org/10.1029/2018GL080959
+"""
+
+import warnings
 import xarray as xr
 
-def max_calc(ds,hst_yr=(1980,2009)):
+# Filter out warning on all-nan slice operations, expected
+warnings.filterwarnings('ignore',
+    message='All-NaN slice encountered')
+
+def _max_calc(ds,hst_yr=(1980,2009)):
 
     yr_slice = slice(hst_yr[0],hst_yr[1])
 
@@ -12,9 +36,9 @@ def max_calc(ds,hst_yr=(1980,2009)):
 
     return ds_max
 
-def ndays_gt_95th(ds,hst_yr=(1980,2009)):
+def _ndays_gt_95th(ds,hst_yr=(1980,2009)):
 
-    yr_slice = slice(hst_yr[0],hst_yr[1])
+    yr_slice = slice('%d-01-01' % hst_yr[0],'%d-12-31' % hst_yr[1])
 
     ds_95pct_hst = ds.sel(time=yr_slice).quantile(0.95,dim='time')
     ds_95pct_rel = ds > ds_95pct_hst
@@ -25,7 +49,7 @@ def ndays_gt_95th(ds,hst_yr=(1980,2009)):
 
     return ds_95d
 
-def fs(ds):
+def _fs(ds):
 
     ds_fs = ds.rolling(time=90,center=True).mean()
     ds_fs = ds_fs.groupby('time.year').max()
@@ -34,9 +58,9 @@ def fs(ds):
 
     return ds_fs
 
-def fwsl(ds,hst_yr=(1980,2009)):
+def _fwsl(ds,hst_yr=(1980,2009)):
 
-    yr_slice = slice(hst_yr[0],hst_yr[1])
+    yr_slice = slice('%d-01-01' % hst_yr[0],'%d-12-31' % hst_yr[1])
 
     ds_min = ds.sel(time=yr_slice).min(dim='time')
     ds_max = ds.sel(time=yr_slice).max(dim='time')
@@ -50,18 +74,20 @@ def fwsl(ds,hst_yr=(1980,2009)):
 
     return ds_fwsl
 
-def calc_fireweather_stats(src_list,hst_yr=(1980,2009),parallel=False):
+def calc_fireweather_stats(src_list,hst_yr=(1980,2009),parallel=True):
 
     ds = xr.open_mfdataset(src_list,parallel=parallel,engine='h5netcdf')
 
-    ds_max = max_calc(ds,hst_yr=hst_yr)
-    ds_95d = ndays_gt_95th(ds,hst_yr=hst_yr)
-    ds_fs = fs(ds)
-    ds_fwsl = fwsl(ds,hst_yr=hst_yr)
+    if parallel:
+        ds = ds.chunk(chunks={'time':-1,'lat': 20,'lon': 60})
 
-    ds_to_export = xr.combine_nested(
-        [ds_max,ds_95d,ds_fs,ds_fwsl],
-        concat_dim='stat')
+    ds_max = _max_calc(ds,hst_yr=hst_yr)
+    ds_95d = _ndays_gt_95th(ds,hst_yr=hst_yr)
+    ds_fs = _fs(ds)
+    ds_fwsl = _fwsl(ds,hst_yr=hst_yr)
+
+    ds_to_export = xr.combine_nested([ds_max,ds_95d,ds_fs,ds_fwsl],
+                                     concat_dim='stat')
     
     return ds_to_export
 
