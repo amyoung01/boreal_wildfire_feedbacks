@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #%% Import libraries
 from pathlib import Path
 import sys
@@ -7,15 +9,20 @@ import xarray as xr
 import yaml
 
 import wildfire_analysis.cffdrs as cffdrs
+from wildfire_analysis.utils import helpers as h
 
 #%% Import config file and read in parameters needed for data processing
-config_fn = Path(__file__).parent / '../wildfire_analysis/config.yaml'
+# Get global values from configuration file
+root_dir = Path(h.get_root_dir())
+config_fn = root_dir / 'config.yaml'
+
 with open(config_fn,'r') as config_file:   
     config_params = yaml.safe_load(config_file)
 
-    processed_data_dir = Path(config_params['PATHS']['processed_data_dir'])
+    processed_data_dir = root_dir / config_params['PATHS']['processed_data_dir']
     gcm_list = config_params['CLIMATE']['gcm_list']
     era5_yr = config_params['TIME']['era5_yr']
+    hst_yr = config_params['TIME']['hst_yr']
     sim_periods = config_params['TIME']['sim_periods']
 
 #%% If verbose=True then have progress bar document processing time
@@ -37,9 +44,11 @@ for gcm in gcm_list:
     if cmip6_cffdrs_dir_i.exists() is False:
         cmip6_cffdrs_dir_i.mkdir(parents=True)
 
-#%% Convert yrs to ranges
+#%% Convert yrs to ranges. Start cmip6_yr at first yr of historical period
+# to provide years for historical reference (e.g. maximum anomaly relative to
+# 1980-2009)
 era5_yr = range(era5_yr[0],era5_yr[1]+1)
-cmip6_yr = range(sim_periods[0][0],sim_periods[-1][1]+1)
+cmip6_yr = range(hst_yr[0],sim_periods[-1][1]+1)
 
 #%% Process and calculate cffdrs for era5 data
 if verbose:
@@ -53,8 +62,11 @@ with tqdm(total=len(era5_yr),disable=not verbose) as pbar: # for progress bar
 
         # Get file list of era5 variables for a single year ...
         filelist = list(era5_dir.glob('*%d*nc' % yr))
-
         metvars = xr.open_mfdataset(filelist,engine='h5netcdf')
+
+        # Transpose axes of data arrays to make sure they're in right order
+        metvars = metvars.transpose('time','lat','lon')
+
         tas = metvars['tasmax'].values
         pr = metvars['pr'].values
         sfcWind = metvars['sfcWind'].values
@@ -100,8 +112,11 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
 
             # Get file list of era5 variables for a single year ...
             filelist = list(cmip6_dir_i.glob('*%d*nc' % yr))
-
             metvars = xr.open_mfdataset(filelist,engine='h5netcdf')
+
+            # Transpose axes of data arrays to make sure they're in right order
+            metvars = metvars.transpose('time','lat','lon')
+
             tas = metvars['tasmax'].values
             pr = metvars['pr'].values
             sfcWind = metvars['sfcWind'].values
