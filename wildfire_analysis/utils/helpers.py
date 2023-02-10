@@ -15,7 +15,11 @@ import numpy as np
 import shapely.vectorized
 import xarray as xr
 
-def get_kwargs(x,kwargs):
+def get_root_dir() -> str:
+
+    return ((pathlib.Path(__file__).parent) / '../').resolve().as_posix()
+
+def get_kwargs(x,kwargs) -> dict:
     
     return {k:kwargs[k] for k in x if k in kwargs}
 
@@ -40,7 +44,7 @@ def trim_geolims(ds,geolims):
 
     return ds
 
-def get_coord_names(ds):
+def get_coord_names(ds) -> dict:
 
     datavar = get_var_names(ds) # Get list of variables in dataset
     datavar = datavar[0] # Get first variable name

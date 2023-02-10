@@ -1,11 +1,10 @@
 PATHS:
-  root_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/wildfire_analysis
-  data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data
-  ancillary_data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data/ancillary
-  raw_data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data/raw
-  processed_data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data/processed
-  dataframes_data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data/dataframes
-  model_results_data_dir: /Users/adam/projects/test/boreal_wildfire_feedbacks/data/model_results
+  data_dir: ../data
+  ancillary_data_dir: ../data/ancillary
+  raw_data_dir: ../data/raw
+  processed_data_dir: ../data/processed
+  dataframes_data_dir: ../data/dataframes
+  model_results_data_dir: ../data/model_results
 CLIMATE:
   geo_lims:
   - -177.1875

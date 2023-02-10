@@ -1,24 +1,16 @@
 from pathlib import Path
+
 import yaml
 
-from wildfire_analysis import __file__ as root_dir
-
-root_dir=Path(root_dir).parent
-data_dir=Path(root_dir / '../data').resolve()
-ancillary_data_dir=data_dir / 'ancillary'
-raw_data_dir=data_dir / 'raw'
-processed_data_dir= data_dir / 'processed'
-dataframes_data_dir=data_dir / 'dataframes'
-model_results_data_dir=data_dir / 'model_results'
+root_dir = Path(__file__).parents[1]
 
 paths = dict(
-    root_dir=root_dir.as_posix(),
-    data_dir=data_dir.as_posix(),
-    ancillary_data_dir=ancillary_data_dir.as_posix(),
-    raw_data_dir=raw_data_dir.as_posix(),
-    processed_data_dir=processed_data_dir.as_posix(),
-    dataframes_data_dir=dataframes_data_dir.as_posix(),
-    model_results_data_dir=model_results_data_dir.as_posix(),
+    data_dir='../data',
+    ancillary_data_dir='../data/ancillary',
+    raw_data_dir='../data/raw',
+    processed_data_dir= '../data/processed',
+    dataframes_data_dir='../data/dataframes',
+    model_results_data_dir='../data/model_results',
     )
 
 climate_params = dict(
