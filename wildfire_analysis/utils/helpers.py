@@ -5,19 +5,19 @@ project.
 """
 
 import datetime as dt
-from keyword import kwlist
 import os
 import pathlib
+# from keyword import kwlist 
 
-import cf_xarray
 import geopandas as gpd
 import numpy as np
 import shapely.vectorized
+import rasterio as rio
 import xarray as xr
 
 def get_root_dir() -> str:
 
-    return ((pathlib.Path(__file__).parent) / '../').resolve().as_posix()
+    return str((pathlib.Path(__file__).parent / '../').resolve())
 
 def get_kwargs(x,kwargs) -> dict:
     
@@ -59,7 +59,21 @@ def get_coord_names(ds) -> dict:
     # coordinate names to predefined terms.
     name_dict = {'time': time_name,'lat': lat_name,'lon': lon_name}
 
-    return name_dict    
+    return name_dict
+
+def get_axes_names(ds) -> dict:
+
+    coord_names = get_coord_names(ds)
+
+    axes_dict = {}
+
+    for name in coord_names:
+
+        axis = ds[name].attrs['axis']
+
+        axes_dict.update({axis: name})
+
+    return axes_dict
 
 def extract_str_parts(filelist,extension='',sep='_'):
 
@@ -82,7 +96,7 @@ def get_geoaxes(ds,coord_axes=None):
     if coord_axes is None:
 
         try:
-            axes = ds.cf.axes
+            axes = get_axes_names(ds)
             axes['X']
             axes['Y']
         except:
@@ -112,7 +126,7 @@ def get_geocoords(coords,**kwargs):
 
     if not isinstance(coords,tuple):
 
-        if isinstance(coords,pathlib.PosixPath) or isinstance(coords,str):
+        if isinstance(coords,pathlib.Path) or isinstance(coords,str):
 
             ds_for_coords = xr.load_dataset(coords)
 
@@ -166,9 +180,33 @@ def regrid_geodata(ds,target_coords,method='linear',**kwargs):
 
     return ds_interp
 
+def raster_transform_to_coords(rst_file):
+
+    with rio.open(rst_file) as ds:
+        transform = ds.get_transform()
+        height, width = ds.shape
+
+    origin = (transform[0],transform[3])
+    res = (transform[1],transform[5])
+    size = (width,height)    
+
+    n = len(origin)
+
+    coords = ()
+
+    for i in range(n):
+
+        coords_i = np.arange(origin[i]+res[i]/2,
+                             origin[i]+res[i]/2 + size[i]*res[i],
+                             res[i])
+        
+        coords = coords + (coords_i,)
+
+    return coords
+
 def mask_from_shp(shpfile,grd_coords,**kwargs):
 
-    if isinstance(shpfile,pathlib.PosixPath) or isinstance(shpfile,str):
+    if isinstance(shpfile,pathlib.Path) or isinstance(shpfile,str):
 
         mask_vct = gpd.read_file(shpfile)
 
