@@ -20,7 +20,7 @@ with open(config_fn,'r') as config_file:
 
     config_params = yaml.safe_load(config_file)
     
-    geo_lims = config_params['CLIMATE']['geo_lims']
+    geo_lims = config_params['EXTENT']['geog_lims']
 
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
@@ -198,7 +198,7 @@ def process_era5(src,dask_load=False):
 
 def main():
 
-    return None
+    return
 
 if __name__ == '__main__':
 

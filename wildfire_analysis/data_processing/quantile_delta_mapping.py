@@ -247,7 +247,7 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
 
 def main():
 
-    return None
+    return
 
 if __name__ == '__main__':
 

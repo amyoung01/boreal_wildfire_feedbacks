@@ -6,10 +6,10 @@ conversions on, and export GCM data needed for analysis.
 from pathlib import Path
 
 import dask
-from numpy import square, sqrt # For wind speed from u and v vectors calcs
 import xarray as xr
 import xclim as xc # For unit conversions
 import yaml
+from numpy import square, sqrt # For calculating wind speed from u, v vectors
 
 from wildfire_analysis.utils import helpers as h
 
@@ -20,7 +20,7 @@ with open(config_fn,'r') as config_file:
 
     config_params = yaml.safe_load(config_file)
     
-    geo_lims = config_params['CLIMATE']['geo_lims']
+    geo_lims = config_params['EXTENT']['geog_lims']
 
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
