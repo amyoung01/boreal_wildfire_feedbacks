@@ -1,116 +1,123 @@
+# -----------------------------------------------------------------------------
 # Initialize workspace
+# -----------------------------------------------------------------------------
 rm(list = ls()) # Remove variables from current environment
 
+# -----------------------------------------------------------------------------
 # Install required libraries
+# -----------------------------------------------------------------------------
+library(data.table) # Extension of 'data.frame' (Version: 1.14.6)
+library(fitdistrplus) # Fit Parametric Distributions (Version 1.1-8)
 library(R2jags) # Using R to Run 'JAGS' (Version: 0.7-1)
-library(envDocument)
 
-# Get directory of R script (https://stackoverflow.com/a/16046056)
-# wdir <- dirname(parent.frame(2)$ofile) #getwd() #dirname(sys.frame(1)$ofile)
-cat(env_doc("print"))
-# dataframes_dir <- paste0(wdir, "/../data/dataframes")
-# model_results_dir <- paste0(wdir, "/../data/model_results")
+# -----------------------------------------------------------------------------
+# Import arguments
+# -----------------------------------------------------------------------------
 
-# model_yrs <- 1980:2020
+args <- commandArgs(trailingOnly = TRUE)
 
-# aab <- read.csv(paste0(dataframes_dir, "annual_area_burned.csv"))
-# era5 <- read.csv(paste0(dataframes_dir, "cffdrs_stats_era5_1979-2020.csv"))
-# treecov <- read.csv(paste0(dataframes_dir, "postfire_forest_growth.csv"))
+dataframe_dir <- args[1]
+results_dir <- args[2]
+jags_models <- args[3:length(args)]
 
-# lnorm_model <- paste0(wdir, "/aab_bayesian_lognormal_regression.txt")
-# gamma_model <- paste0(wdir, "/aab_bayesian_gamma_regression.txt")
+aab <- read.csv(file.path(dataframe_dir, "annual_area_burned.csv"))
+era5 <- read.csv(file.path(dataframe_dir, "cffdrs-stats_era5_1979-2020.csv"))
+ecos_size <- read.csv(file.path(dataframe_dir, "ecoregion_size.csv"))
+treecov <- read.csv(file.path(dataframe_dir, "postfire_forest_growth.csv"))
 
-# data <- read.csv(data_table_file)
-# postfire_regrowth = read.csv(postfire_regrowth_file)
-# ecos_size <- read.csv(ecos_size_file)
+df <- data.table::merge.data.table(aab, era5, by = c("year", "ecos"))
 
-# unique_ecos = unique(data$ecos)
+# -----------------------------------------------------------------------------
+# Modify annual area burned variable for analysis
+# -----------------------------------------------------------------------------
 
-# data$aab[data$aab<=4] <- runif(sum(data$aab<=4),0,4)
+# Shorten column name of annual area burned for analysis
+names(df)[names(df) == "annual_area_burned_km2"] <- "aab"
 
-# nChains <- 8
-# burnInSteps <- 10000
-# thinSteps <- 80
-# numSavedSteps <- 2000
-# nIter <- ceiling(burnInSteps + (numSavedSteps * thinSteps)/nChains)
+# Add small uniform values if total area burned is less than 4 km2 (=400 ha)
+df$aab[is.na(df$aab)] <- 0
+df$aab[df$aab < 4] <- runif(sum(df$aab < 4), 0, 4)
 
-# gamma_params_to_save <- c("beta0",
-#                           "beta1",
-#                           "beta2",
-#                           "shape",
-#                           "aab_init",
-#                           "M")
+# -----------------------------------------------------------------------------
+# Filter by analysis years (1980-2020) and identify unique ecoregions
+# -----------------------------------------------------------------------------
+# Limit years to 1980-2020
+df <- df[(df$year >= 1980) & (df$year <= 2020), ]
+unique_ecos <- unique(df$ecos)
 
-# lnorm_params_to_save <- c("beta0",
-#                           "beta1",
-#                           "beta2",
-#                           "sdlog",
-#                           "aab_init",
-#                           "M")
+# -----------------------------------------------------------------------------
+# Setting for Bayesian model runs
+# -----------------------------------------------------------------------------
+n_chains <- 8
+burn_in_steps <- 10000
+thin_steps <- 80
+num_saved_steps <- 2000
+n_iter <- ceiling(burn_in_steps + (num_saved_steps * thin_steps) / n_chains)
 
-# for (i in 1:length(unique_ecos)){
-  
-#   df_i <- data[data$ecos == unique_ecos[i],]; rownames(df_i) <- NULL
-#   w <- postfire_regrowth$w[postfire_regrowth$ecos == unique_ecos[i]]
-#   w_null <- rep(0,length(w))
-  
-#   S <- ecos_size$area_km2[ecos_size$ecos == unique_ecos[i]]
-  
-#   # Maximum Likelihood Estimates (MLE) for lognormal model
-#   aab_ref <- df_i$aab[(df_i$yr >= 1980) & (df_i$yr <= 1999)]
-#   aab_ref_mle <- fitdistrplus::fitdist(aab_ref,"lnorm")
-  
-#   data_list_i <- list(aab = df_i$aab,
-#                       BUI = df_i$bui_fs_avg,
-#                       ISI = df_i$isi_max_avg,
-#                       w = w,
-#                       S = S,
-#                       n = nrow(df_i),
-#                       aab_meanlog = aab_ref_mle$estimate["meanlog"],
-#                       aab_selog = aab_ref_mle$sd["meanlog"])
-  
-#   aab_lnorm_feedback <- jags(data = data_list_i,
-#                              parameters.to.save = lnorm_params_to_save,
-#                              model.file = lnorm_model,
-#                              n.chains = nChains,
-#                              n.iter = nIter,
-#                              n.burnin = burnInSteps,
-#                              n.thin = thinSteps)
-  
-#   aab_gamma_feedback <- jags(data = data_list_i,
-#                              parameters.to.save = gamma_params_to_save,
-#                              model.file = gamma_model,
-#                              n.chains = nChains,
-#                              n.iter = nIter,
-#                              n.burnin = burnInSteps,
-#                              n.thin = thinSteps)
-  
-#   data_list_i$w <- w_null
-  
-#   aab_lnorm_nofeedback <- jags(data = data_list_i, 
-#                                parameters.to.save = lnorm_params_to_save,
-#                                model.file = lnorm_model, 
-#                                n.chains = nChains, 
-#                                n.iter = nIter, 
-#                                n.burnin = burnInSteps, 
-#                                n.thin = thinSteps)
-  
-#   aab_gamma_nofeedback <- jags(data = data_list_i, 
-#                                parameters.to.save = gamma_params_to_save,
-#                                model.file = gamma_model, 
-#                                n.chains = nChains, 
-#                                n.iter = nIter, 
-#                                n.burnin = burnInSteps, 
-#                                n.thin = thinSteps)
-  
-#   lognormal_feedback_file <- sprintf("%s/results/regression_results/full_model/lognormal_feedback_%d.RData",wdir,unique_ecos[i])
-#   gamma_feedback_file <- sprintf("%s/results/regression_results/full_model/gamma_feedback_%d.RData",wdir,unique_ecos[i])
-#   lognormal_nofeedback_file <- sprintf("%s/results/regression_results/full_model/lognormal_no-feedback_%d.RData",wdir,unique_ecos[i])
-#   gamma_nofeedback_file <- sprintf("%s/results/regression_results/full_model/gamma_no-feedback_%d.RData",wdir,unique_ecos[i])
-  
-#   save(aab_lnorm_feedback,file=lognormal_feedback_file)
-#   save(aab_gamma_feedback,file=gamma_feedback_file)
-#   save(aab_lnorm_nofeedback,file=lognormal_nofeedback_file)
-#   save(aab_gamma_nofeedback,file=gamma_nofeedback_file)
-  
-# }
+sims <- c("feedback", "no-feedback")
+
+for (i in seq_along(unique_ecos)){
+
+  df_i <- df[df$ecos == unique_ecos[i], ]
+
+  w <- treecov$w[treecov$ecos == unique_ecos[i]]
+  w_null <- rep(0, length(w))
+
+  S <- ecos_size$area_km2[ecos_size$ecos == unique_ecos[i]]
+
+  # Maximum Likelihood Estimates (MLE) for lognormal model
+  aab_ref <- df_i$aab[df_i$year <= 1999]
+  aab_ref_mle <- fitdistrplus::fitdist(aab_ref, "lnorm")
+
+  data_list <- list(
+                aab = df_i$aab,
+                BUI = df_i$bui_95d,
+                ISI = df_i$isi_max,
+                S = S,
+                n = nrow(df_i),
+                aab_meanlog = aab_ref_mle$estimate["meanlog"],
+                aab_selog = aab_ref_mle$sd["meanlog"]
+                )
+
+  for (j in seq_along(jags_models)){
+
+    jags_model_header <- readLines(jags_models[j], n = 2)
+    distr <- strsplit(jags_model_header[[1]], " ")[[1]][-c(1, 2)]
+    params_to_save <- strsplit(jags_model_header[[2]], " ")[[1]][-c(1, 2)]
+
+    for (s in sims){
+
+      if (s == "feedback") {
+
+        data_list$w <- w
+
+      } else if (s == "no_feedback") {
+
+        data_list$w <- w_null
+
+      }
+
+      jags_output <- R2jags::jags(
+                      data = data_list,
+                      parameters.to.save = params_to_save,
+                      model.file = jags_models[j],
+                      n.chains = n_chains,
+                      n.iter = n_iter,
+                      n.burnin = burn_in_steps,
+                      n.thin = thin_steps,
+                      quiet = TRUE
+                      )
+
+      export_fn <- file.path(results_dir,
+                      sprintf("jags-results_%s_%s-model_%d.RData",
+                          distr, s, unique_ecos[i]
+                          )
+                      )
+
+      save(jags_output, file = export_fn)
+
+    }
+
+  }
+
+}
