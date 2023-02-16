@@ -12,12 +12,12 @@ conda activate py39
 # Find directory of current file, source: https://stackoverflow.com/a/246128
 WDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# # Run file to generate json file providing the data needed for the request
-# cd $WDIR/../wildfire_analysis/utils
-# python generate_mod44b_json.py
+# Run file to generate json file providing the data needed for the request
+cd $WDIR/../wildfire_analysis/utils
+python generate_mod44b_json.py
 
-# # Location of json file
-# JSONFILE=$WDIR/../wildfire_analysis/nasa_mod44b_request.json
+# Location of json file
+JSONFILE=$WDIR/../wildfire_analysis/nasa_mod44b_request.json
 
 # Set destination directory 
 DEST=$WDIR/../data/raw/veg/mod44b
@@ -26,13 +26,12 @@ mkdir -p $DEST
 # Submit processing reques to NASA AppEEARS (https://appeears.earthdatacloud.nasa.gov)
 # Download metadata from processing into json file. This will give task_id 
 # which is needed for downloading
-
-# curl \
-#   --request POST \
-#   --data @$JSONFILE \
-#   --header "Content-Type: application/json" \
-#   --header "Authorization: Bearer $TOKEN" "https://appeears.earthdatacloud.nasa.gov/api/task" \
-#   > $WDIR/../tmp/mod44b_request_submission.json
+curl \
+  --request POST \
+  --data @$JSONFILE \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer $TOKEN" "https://appeears.earthdatacloud.nasa.gov/api/task" \
+  > $WDIR/../tmp/mod44b_request_submission.json
 
 # Use python file to download each geotiff file that were processed
 cd $WDIR/../wildfire_analysis/data_processing
