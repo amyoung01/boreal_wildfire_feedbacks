@@ -29,7 +29,7 @@ ecos_fn = root_dir / '../data/ancillary/ecos.shp'
 ecos = gpd.read_file(ecos_fn)
 eco_id = ecos['ECO_ID']
 
-cffdrs_stats_dir = root_dir / '../data/processed/cffdrs/cffdrs_stats'
+cffdrs_stats_dir = processed_data_dir / 'cffdrs/cffdrs_stats'
 
 src_to_process = ['era5'] + gcm_list
 
