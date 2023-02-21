@@ -1,7 +1,10 @@
 **/.DS_Store
 
-data/raw/
-data/processed/
+data/ancillary/*
+data/dataframes/*
+data/raw/*
+data/processed/*
+data/model_results/*
 
 build/
 manuscript/
