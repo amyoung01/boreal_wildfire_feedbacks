@@ -14,7 +14,7 @@ config_fn = root_dir / 'config.yaml'
 with open(config_fn,'r') as config_file:   
     config_params = yaml.safe_load(config_file)
 
-    geo_lims = config_params['EXTENT']['geog_lims']
+    geo_lims = config_params['EXTENT']['mod44b_download_lims']
     treecov_yr =config_params['TIME']['treecov_yr']
 
 dictionary = {
@@ -67,7 +67,7 @@ dictionary = {
             'projection': 'sinu_modis'
         }
     },
-    'task_name': 'NorthAmerica_Boreal_TreeCover',
+    'task_name': 'MOD44B_Alaska_and_Canada',
     'task_type': 'area'
 }
 
