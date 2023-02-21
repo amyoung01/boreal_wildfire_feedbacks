@@ -26,10 +26,10 @@ EXTENT=( \
   $(yq '.EXTENT.proj_lims[3]' $WDIR/../wildfire_analysis/config.yaml) \
 )
 
-# CRS=$( yq '.CRS' $WDIR/../wildfire_analysis/config.yaml )
 # Spatial reference system information
 CRS=$WDIR/../data/ancillary/AK_Canada_aea.prj
 
+# Only do these files for now to save on storage
 FILES=(
       $( ls $WDIR/../data/raw/veg/mod44b/*Percent_Tree_Cover*.tif )
       $( ls $WDIR/../data/raw/veg/mod44b/*Quality*.tif )
