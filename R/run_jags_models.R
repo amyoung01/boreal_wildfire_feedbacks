@@ -71,8 +71,8 @@ for (i in seq_along(unique_ecos)){
 
   data_list <- list(
                 aab = df_i$aab,
-                BUI = df_i$bui_95d,
-                ISI = df_i$isi_max,
+                BUI = df_i$bui,
+                ISI = df_i$isi,
                 S = S,
                 n = nrow(df_i),
                 aab_meanlog = aab_ref_mle$estimate["meanlog"],
