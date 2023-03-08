@@ -3,32 +3,42 @@
 # -----------------------------------------------------------------------------
 rm(list = ls()) # Remove variables from current environment
 
-gcms <- c("EC-Earth3-Veg","MPI-ESM1-2-HR","MRI-ESM2-0","CNRM-CM6-1-HR")
+# TODO: how to read in config.yaml file into R
+gcms <- c("EC-Earth3-Veg", "MPI-ESM1-2-HR", "MRI-ESM2-0", "CNRM-CM6-1-HR")
 
-setwd("/Users/adam/projects/test/boreal_wildfire_feedbacks/data/model_results")
+# -----------------------------------------------------------------------------
+# Read in list of model files 
+# -----------------------------------------------------------------------------
+setwd("data/model_results")
 files <- list.files(pattern = "\\.RData$")
 
-ecos_size <- "/Users/adam/projects/test/boreal_wildfire_feedbacks/data/dataframes/ecoregion_size.csv"
+ecos_size <- "data/dataframes/ecoregion_size.csv"
 ecos_size <- read.csv(ecos_size)
 
 unique_ecos = ecos_size$ecos
 
 pred_yrs <- 2021:2099
 
+max_frac <- 6
+
+# -----------------------------------------------------------------------------
+# Make projections of future area burned for each gcm
+# -----------------------------------------------------------------------------
 for (mdl in gcms){
 
-    pred_vars_file <- sprintf("/Users/adam/projects/test/boreal_wildfire_feedbacks/data/dataframes/cffdrs-stats_%s_1980-2099.csv",mdl)
+    pred_vars_file <- sprintf("data/dataframes/cffdrs-stats_%s_1980-2099.csv",
+                               mdl)
     pred_vars <- read.csv(pred_vars_file)
 
-    for (f in 1:length(files)){
+    for (f in seq_along(files)){
 
-        setwd("/Users/adam/projects/test/boreal_wildfire_feedbacks/data/model_results")
+        setwd("data/model_results")
 
         file_i <- files[f]
         jags_results <- load(file_i)
 
-        file_name <- strsplit(file_i,"\\.")[[1]][1]
-        file_parts <- strsplit(file_name,"_")[[1]]
+        file_name <- strsplit(file_i, "\\.")[[1]][1]
+        file_parts <- strsplit(file_name, "_")[[1]]
         distr <- file_parts[2]
         sim <- file_parts[3]
         ecos <- as.numeric(file_parts[4])
@@ -46,13 +56,13 @@ for (mdl in gcms){
         beta0 <- sims$beta0
         beta1 <- sims$beta1
         beta2 <- sims$beta2
-        betas <- cbind(
-                    beta0,
-                    beta1,
-                    beta2
-                    )
+        betas <- cbind(beta0,
+                       beta1,
+                       beta2)
 
         aab_init <- sims$aab_init
+
+        max_aab <- max_frac * max(aab)
 
         N <- length(beta0)
 
@@ -99,6 +109,8 @@ for (mdl in gcms){
 
             }
 
+            aab_i <- ifelse(aab_i > max_aab, max_aab, aab_i)
+
             export_mtx[, which(pred_yrs == yr)] <- aab_i
 
         }
@@ -109,7 +121,8 @@ for (mdl in gcms){
             mdl, distr, sim, ecos)
 
         write.csv(export_mtx,
-            file=sprintf("/Users/adam/projects/test/boreal_wildfire_feedbacks/data/model_results/%s",export_fn),
+            file = sprintf("data/model_results/projected_area_burned/%s",
+                           export_fn),
             row.names = FALSE)
 
     }

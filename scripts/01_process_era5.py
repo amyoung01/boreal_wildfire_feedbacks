@@ -22,24 +22,29 @@ with open(config_fn,'r') as config_file:
     processed_data_dir = root_dir / config_params['PATHS']['processed_data_dir']
     era5_yr = config_params['TIME']['era5_yr']
 
+#%% Read in verbose flag to print progress bar
 verbose = False
 if (sys.argv[-1] == "--verbose"):
     verbose = True
 
+#%% Set directories for reading and writing
 wdir = raw_data_dir / 'climate/era5/netcdf4'
 dest = processed_data_dir / 'climate/era5'
 
-# Convert to range
+#%% Set range of years for processing
 yr_range = range(era5_yr[0],era5_yr[1]+1)
 
 with tqdm(total=len(yr_range),disable=not verbose) as pbar: # for progress bar
 
-    for yr in yr_range:
+    for yr in yr_range: # For each year ...
 
+        # Find file for given year
         src = list(wdir.glob('%d*.nc' % yr))
 
+        # Process ERA5 datasets
         ds = process_era5(src,dask_load=True)
 
+        # Export netcdf for each variable in a given year
         for var in h.get_var_names(ds):
 
             fn = dest / ('%s_era5_%d.nc' % (var,yr))

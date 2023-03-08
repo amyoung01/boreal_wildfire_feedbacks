@@ -36,7 +36,8 @@ mkdir -p $DEST
 ###############################################################################
 
 # Download Alaska fire history
-# TODO: add wildcard if geodatabase name changes in the future like _1940-2023.zip
+# TODO: add wildcard if geodatabase name changes in the future, e.g., 
+# like _1940-2023.zip
 cd $AK_DIR
 echo
 echo "Downloading Alaska fire polygons ..."

@@ -69,34 +69,38 @@ for (i in seq_along(unique_ecos)){
   aab_ref <- df_i$aab[df_i$year <= 1999]
   aab_ref_mle <- fitdistrplus::fitdist(aab_ref, "lnorm")
 
+  # Data needed to run Bayesian model
   data_list <- list(
                 aab = df_i$aab,
-                BUI = df_i$bui,
-                ISI = df_i$isi,
+                BUI = df_i$bui_95d,
+                ISI = df_i$isi_max,
                 S = S,
                 n = nrow(df_i),
                 aab_meanlog = aab_ref_mle$estimate["meanlog"],
                 aab_selog = aab_ref_mle$sd["meanlog"]
                 )
 
+  # For each model (here using a lognormal and Gamma distributions)
   for (j in seq_along(jags_models)){
 
     jags_model_header <- readLines(jags_models[j], n = 2)
     distr <- strsplit(jags_model_header[[1]], " ")[[1]][-c(1, 2)]
     params_to_save <- strsplit(jags_model_header[[2]], " ")[[1]][-c(1, 2)]
 
+    # Process feedback model and no feedback model
     for (s in sims){
 
       if (s == "feedback") {
 
         data_list$w <- w
 
-      } else if (s == "no_feedback") {
+      } else if (s == "no-feedback") {
 
         data_list$w <- w_null
 
       }
 
+      # Use R2jags package to run Bayesian models
       jags_output <- R2jags::jags(
                       data = data_list,
                       parameters.to.save = params_to_save,
@@ -114,6 +118,7 @@ for (i in seq_along(unique_ecos)){
                           )
                       )
 
+      # Save output as RData file
       save(jags_output, file = export_fn)
 
     }
