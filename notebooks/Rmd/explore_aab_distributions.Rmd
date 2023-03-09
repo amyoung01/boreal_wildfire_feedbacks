@@ -1,0 +1,226 @@
+---
+title: "explore_aab_distributions"
+output:
+  html_document: 
+date: "`r Sys.Date()`"
+---
+  
+This page explores the distributions of annual area burned among all ecoregions
+in study area and identifies the best distributions to use within our
+generalized linear modeling framework.
+  
+```{r Import libraries and read in aab data, include = TRUE}
+
+suppressPackageStartupMessages(library(fitdistrplus))
+suppressPackageStartupMessages(library(actuar)) # Needed for pareto distr
+
+aab.data <- read.csv("../../data/dataframes/annual_area_burned.csv")
+
+# Rename aab variable to shorten it
+colnames(aab.data)[colnames(aab.data) == "annual_area_burned_km2"] <- "aab"
+
+# Replace AAB zeros with a random uniform variable between 0-4 km2
+aab.data$aab[aab.data$aab == 0] <- runif(n = sum(aab.data$aab < 4),
+                                        min = 0 ,
+                                        max = 4)
+
+aab.data <- aab.data[aab.data$year >= 1980, ]
+
+# Print aab for Alaska from 2000 onwards
+print(aab.data[(aab.data$ecos == 50607.0) & (aab.data$year >= 2000), ])
+
+aab <- aab.data$aab
+
+```
+    
+Now go through and get parameter estimates for the following four distributions 
+for the Alaskan ecoregion (50607):
+
+1. lognormal 
+2. gamma 
+3. weibull 
+4. pareto 
+
+```{r, include = TRUE}
+
+id <- (aab.data$ecos == 50607.0) & (aab.data$year >= 1980)
+
+# Turn warnings off here. For some reason an error that states "NaNs are 
+# produced" only occurs when this code is executed from inside a Rmd file. 
+# Doesn't occur when run by itself outside of Markdwown and not sure how to fix 
+# right now.
+options(warn = -1)
+
+# Pareto and Gamma need starting parameters to successfully begin fitting and 
+# optimization procedure
+fit1 <- fitdistrplus::fitdist(aab[id], "pareto", 
+                              start = list(shape = 1, scale = 1e3))
+fit2 <- fitdistrplus::fitdist(aab[id], "gamma", 
+                              start = list(shape = 1, scale = 1e3))
+fit3 <- fitdistrplus::fitdist(aab[id], "weibull")
+fit4 <- fitdistrplus::fitdist(aab[id], "lnorm")
+
+# Turn warnings back on
+options(warn = 0)
+
+```
+
+Let's print out the parameter estimate results
+
+```{r}
+print(fit1)
+print(fit2)
+print(fit3)
+print(fit4)
+```
+  
+Now plot distribution fitting results
+  
+```{r}
+plot(fit1) # Pareto
+plot(fit2) # Gamma
+plot(fit3) # Weibull
+plot(fit4) # Lognormal
+```
+
+```{r}
+
+set.seed(54321)
+
+# Ecoregion labels/IDs
+ecos <- unique(aab.data$ecos)
+R <- 200 # Number of bootstrap samples
+
+gof_stats <- data.frame(ecos = factor(),
+                        distr = factor(),
+                        aic = numeric(),
+                        pexceed = numeric(),
+                        mae = numeric(),
+                        maxLL = numeric())
+
+boot_fx <- function(data, id, samp.rate = 0.8){
+  
+  n <- length(data)
+  t <- seq(1, round(n * samp.rate))
+  p <- seq(round(n * samp.rate) + 1, n)
+  
+  x <- data[id[t]]
+  z <- data[id[p]]
+  
+  max_test <- sort(data, decreasing = TRUE)[1:10]
+  
+  # Do parameter estimation on current bootstrap sample, similar to above
+  fit1 <- fitdistrplus::fitdist(x, "pareto",
+                                start = list(shape = 1, scale = 1e3))
+  fit2 <- fitdistrplus::fitdist(x, "gamma", 
+                                start = list(shape = 1, scale = 1e3))
+  fit3 <- fitdistrplus::fitdist(x, "weibull")
+  fit4 <- fitdistrplus::fitdist(x, "lnorm")
+  
+  # Get parameter estimates for each distribution, needed for several GOF
+  # summaries below
+  pare <- fit1$estimate
+  gamm <- fit2$estimate
+  weib <- fit3$estimate
+  logn <- fit4$estimate
+  
+  # Get BIC values from MLE fits for each distribution
+  aic <- c(fit1$aic, fit2$aic, fit3$aic, fit4$aic)
+  
+  # Get probability of exceeding maximum observed aab value for a given 
+  # distribution
+  q <- max(x)
+  
+  pexceed1 <- 1 - ppareto(q, shape = pare["shape"], scale = pare["scale"])
+  pexceed2 <- 1 - pgamma(q, shape = gamm["shape"], scale = gamm["scale"])
+  pexceed3 <- 1 - pweibull(q, shape = weib["shape"], scale = weib["scale"])
+  pexceed4 <- 1 - plnorm(q, meanlog = logn["meanlog"], sdlog = logn["sdlog"])
+  
+  pexceed <- c(pexceed1, pexceed2, pexceed3, pexceed4)
+  
+  # Get absolute error estimates of total area burned
+  
+  sim1 <- rpareto(length(p), shape = pare["shape"], scale = pare["scale"])
+  sim2 <- rgamma(length(p), shape = gamm["shape"], scale = gamm["scale"])
+  sim3 <- rweibull(length(p), shape = weib["shape"], scale = weib["scale"])
+  sim4 <- rlnorm(length(p), meanlog = logn["meanlog"], sdlog = logn["sdlog"])
+  
+  mae <- abs(c(sum(sim1), sum(sim2), sum(sim3), sum(sim4)) - sum(z))
+  
+  # Get log-liklihood for 10 largest fire years to see how well distribution
+  # estimates the tails of the distributions
+  
+  maxLL1 <- sum(dpareto(max_test, shape = pare["shape"], scale = pare["scale"], 
+                        log = TRUE))
+  maxLL2 <- sum(dgamma(max_test, shape = gamm["shape"], scale = gamm["scale"], 
+                        log = TRUE))  
+  maxLL3 <- sum(dweibull(max_test, shape = weib["shape"], scale = weib["scale"], 
+                        log = TRUE))
+  maxLL4 <- sum(dlnorm(max_test, meanlog = logn["meanlog"], sdlog = logn["sdlog"], 
+                        log = TRUE))
+  
+  maxLL <- c(maxLL1, maxLL2, maxLL3, maxLL4)
+  
+  return(list(aic = aic, pexceed = pexceed, mae = mae, maxLL = maxLL))
+    
+}
+
+
+for (i in seq_along(ecos)) {
+  
+  id <- aab.data$ecos == ecos[i]
+  aab.i <- aab[id]
+  
+  n <- sum(id)
+  
+  for (j in seq(1, R)){
+    
+    rand_id <- sample(n, size = n, replace = FALSE)
+    
+    options(warn = -1)
+    boot_results <- boot_fx(aab.i, rand_id)
+    
+    df.i <- data.frame(ecos = as.factor(rep(ecos[i], 4)),
+                       distr = as.factor(c("pareto", "gamma",
+                                           "weibull", "lnorm")),
+                       aic = boot_results[["aic"]],
+                       pexceed = boot_results[["pexceed"]],
+                       abserr = boot_results[["mae"]],
+                       maxLL = boot_results[["maxLL"]])
+    
+    gof_stats <- rbind(gof_stats, df.i, make.row.names = FALSE)
+    
+  }
+  
+}
+
+avg_gof_stats <- aggregate(gof_stats[, c("aic", "pexceed", "abserr", "maxLL")], 
+                           by = list(Distribution = gof_stats$distr),
+                           median)
+  
+print(avg_gof_stats)
+```
+
+Now that we have a summary of our goodness-of-fit statistics for each 
+distribution, we can also go through and rank the best performing ones
+
+```{r, echo = FALSE}
+min_aic <- which(avg_gof_stats$aic == min(avg_gof_stats$aic))
+min_pexceed <- which(avg_gof_stats$pexceed == min(avg_gof_stats$pexceed))
+min_abserr <- which(avg_gof_stats$abserr == min(avg_gof_stats$abserr))
+max_maxLL <- which(avg_gof_stats$maxLL == max(avg_gof_stats$maxLL))
+
+cat("The best distributions according to each GOF statistic are:\n",
+    "\n",
+    "AIC: ", 
+      as.character(avg_gof_stats$Distribution[min_aic]), "\n",
+    "P(exceedence): ", 
+      as.character(avg_gof_stats$Distribution[min_pexceed]), "\n",
+    "Abs. Err.: ", 
+      as.character(avg_gof_stats$Distribution[min_abserr]), "\n",
+    "Tail LogLik: ", 
+      as.character(avg_gof_stats$Distribution[max_maxLL]), "\n")
+```
+We can see from the above that the Gamma distribution is consistently chosen as 
+the distribution that best models aab across our study area, except for the 
+Weibull distribution if only using AIC as a GOF metric.

@@ -1,7 +1,6 @@
 """
 Set of helper functions for various tasks in boreal_fire_feedbacks
 project.
-
 """
 
 import datetime as dt
@@ -17,18 +16,37 @@ import xarray as xr
 
 def get_root_dir() -> str:
 
+    """
+    When run it will return the absolute path of the project directory.
+    """
+
     return str((pathlib.Path(__file__).parent / '../').resolve())
 
 def get_kwargs(x,kwargs) -> dict:
+
+    """
+    Description
+    -----------
+    User provides a list of kwargs and this function returns a dictionary which 
+    lists the kwargs that are available for a specific function.
+    """
     
     return {k:kwargs[k] for k in x if k in kwargs}
 
 def get_var_names(ds):
 
+    """
+    Returns list of data variables available in a given xarray dataset
+    """
+
     # Return list of all variable names in netcdf dataset
     return list(ds.keys())
 
 def trim_geolims(ds,geolims):
+
+    """
+    Alter geographic extent of a xarray dataset
+    """
 
     coord_names = get_coord_names(ds)
 
@@ -46,6 +64,12 @@ def trim_geolims(ds,geolims):
 
 def get_coord_names(ds) -> dict:
 
+    """
+    Returns dictionary of coordinate names from an xarray datast. Assumes
+    it is geographically projected and that there are three dimensions 
+    (time, lat, lon).
+    """
+
     datavar = get_var_names(ds) # Get list of variables in dataset
     datavar = datavar[0] # Get first variable name
     coord_names = ds[datavar].dims # Get coordinate names (e.g., latitude)
@@ -62,6 +86,11 @@ def get_coord_names(ds) -> dict:
     return name_dict
 
 def get_axes_names(ds) -> dict:
+
+    """
+    Get coordinate variable names for each specific dimension (X, Y, and T) in
+    an xarray dataset.
+    """
 
     coord_names = get_coord_names(ds)
 
@@ -148,6 +177,8 @@ def get_geocoords(coords,**kwargs):
 def coords_to_mesh(coords,flatten=False,**kwargs):
 
     """
+    Returns numpy meshgrid for a given set of coordinate values in 2 dimensions
+
     flatten: bool
         False will return 2d array and True will return 1D array    
     """
@@ -163,6 +194,10 @@ def coords_to_mesh(coords,flatten=False,**kwargs):
     return (X,Y)    
 
 def regrid_geodata(ds,target_coords,method='linear',**kwargs):
+
+    """
+    Shortcut to using xarrays buil in interpolation function.
+    """
 
     # Get axes for current xarray dataset. Will return empty dict if not 
     # available
@@ -181,6 +216,10 @@ def regrid_geodata(ds,target_coords,method='linear',**kwargs):
     return ds_interp
 
 def raster_transform_to_coords(rst_file):
+
+    """
+    Use rasterio library to get x and y coordinate values for a raster dataset
+    """
 
     with rio.open(rst_file) as ds:
         transform = ds.get_transform()
@@ -205,6 +244,8 @@ def raster_transform_to_coords(rst_file):
     return coords
 
 def mask_from_shp(shpfile,grd_coords,**kwargs):
+
+    # Get gridded geospatial mask for a region covered by an ESRI shapefile
 
     if isinstance(shpfile,pathlib.Path) or isinstance(shpfile,str):
 

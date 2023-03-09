@@ -24,6 +24,8 @@ aab <- read.csv(file.path(dataframe_dir, "annual_area_burned.csv"))
 era5 <- read.csv(file.path(dataframe_dir, "cffdrs-stats_era5_1979-2020.csv"))
 ecos_size <- read.csv(file.path(dataframe_dir, "ecoregion_size.csv"))
 treecov <- read.csv(file.path(dataframe_dir, "postfire_forest_growth.csv"))
+predictor_vars <- read.csv(file.path(dataframe_dir,
+                                     "regression_predictors.csv"))
 
 df <- data.table::merge.data.table(aab, era5, by = c("year", "ecos"))
 
@@ -69,11 +71,17 @@ for (i in seq_along(unique_ecos)){
   aab_ref <- df_i$aab[df_i$year <= 1999]
   aab_ref_mle <- fitdistrplus::fitdist(aab_ref, "lnorm")
 
+  # Get specific predictor variable for given ecoregion
+  mdl_form <- predictor_vars$mdl[predictor_vars$ecos == unique_ecos[i]]
+  mdl_parts <- strsplit(mdl_form, " ")[[1]]
+  isi_var <- mdl_parts[3]
+  bui_var <- mdl_parts[5]
+
   # Data needed to run Bayesian model
   data_list <- list(
                 aab = df_i$aab,
-                BUI = df_i$bui_95d,
-                ISI = df_i$isi_max,
+                BUI = df_i[[bui_var]],
+                ISI = df_i[[isi_var]],
                 S = S,
                 n = nrow(df_i),
                 aab_meanlog = aab_ref_mle$estimate["meanlog"],
