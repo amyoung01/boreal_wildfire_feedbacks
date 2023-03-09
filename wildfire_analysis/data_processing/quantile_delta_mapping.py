@@ -100,10 +100,12 @@ def mask_arrays(ref,hst,sim,mask=None):
 
 def chunk_data_arrays(ref,hst,sim,frac=0.2):
 
-    # Partition dataset into dask chunks for parallel processing if set to True.
-    # Currently set to 20% the size of each dimension, can modify this later to 
-    # make it more dynamic. Time dimension cannot be broken up for doing quantile
-    # mapping.
+    """
+    Partition dataset into dask chunks for parallel processing if set to True.
+    Currently set to 20% the size of each dimension, can modify this later to 
+    make it more dynamic. Time dimension cannot be broken up for doing quantile
+    mapping.
+    """
 
     axes = h.get_geoaxes(ref)
 
@@ -245,10 +247,6 @@ def quantile_delta_mapping(ref_src,hst_src,sim_src,
 
         return return_ds
 
-def main():
-
-    return
-
 if __name__ == '__main__':
 
-    main()
+    None

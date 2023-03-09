@@ -91,10 +91,6 @@ def calc_fireweather_stats(src_list,hst_yr=(1980,2009),parallel=True):
     
     return ds_to_export
 
-def main():
-
-    return None
-
 if __name__ == '__main__':
 
-    main()
+    None

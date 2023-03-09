@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import sys
+import time
 from pathlib import Path
 
 from tqdm import tqdm
@@ -15,6 +16,25 @@ if (sys.argv[-1] == "--verbose"):
     verbose = True
 
 token = os.environ.get('TOKEN')
+
+status_response = True
+
+while status_response:
+
+    response = requests.get(
+        'https://appeears.earthdatacloud.nasa.gov/api/status', 
+        headers={'Authorization': 'Bearer {0}'.format(token)})
+    status_response = response.json()
+
+    localtime = time.localtime()
+    localtime_str = time.strftime("%I:%M:%S %p", localtime)
+    print('Checked at %s, still processing request ...' % localtime_str,
+          end="\r")
+
+    time.sleep(60*5)
+
+print('Request has finished at %s!' % time.strftime('%I:%M:%S %p', localtime))
+print('\nNow downloading ...')
 
 request_meta = root_dir / '../tmp/mod44b_request_submission.json'
 dest_dir = root_dir / '../data/raw/veg/mod44b'

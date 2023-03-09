@@ -1,8 +1,14 @@
+#!/usr/bin/env python3
+
 """
-This module provides a set of functions to read in, organize, do unit
-conversions on, and export ERA5 data needed for analysis.
+This module provides a set of functions to:
+    -Read in raw ERA5 datasets 
+    -Organize and filter these datasets
+    -Convert units
+    -Export processed ERA5 data needed for analysis.
 """
 
+#%% Import required libraries
 from pathlib import Path
 
 import dask
@@ -25,6 +31,7 @@ with open(config_fn,'r') as config_file:
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
 
+# Function to calculate daily maximum temperature from hourly data
 def _calc_tasmax(da,dask_compute=False):
 
     da = xc.units.convert_units_to(da,'degC') # [degC]
@@ -40,6 +47,7 @@ def _calc_tasmax(da,dask_compute=False):
 
     return tasmax
 
+# Function to daily total precip from hourly data
 def _calc_pr(da,dask_compute=False):
 
     da = xc.units.convert_units_to(da,'mm') # [mm]
@@ -54,6 +62,8 @@ def _calc_pr(da,dask_compute=False):
 
     return pr
 
+# Function to calculate daily mean horizontal near-surface wind speed from 
+# hourly data. Thhis uses u10 and v10 vectors to calculate mean wind speed
 def _calc_sfcWind(ds,dask_compute=False):
 
     u10 = ds['u10']
@@ -74,6 +84,8 @@ def _calc_sfcWind(ds,dask_compute=False):
 
     return sfcWind
 
+# Function to calculate vapor pressure from temperature. Used to calculate 
+# relative humidity.
 def _vapor_pressure(T):
 
     if xc.units.str2pint(T.units).units == 'kelvin':
@@ -87,6 +99,8 @@ def _vapor_pressure(T):
 
     return vp
 
+# Calculate near-surface daily minimum relative humidity from hourly air and 
+# dewpoint temperature. Clip values from 0-100%.
 def _calc_hursmin(ds,dask_compute=False):
 
     tas = ds['t2m']
@@ -106,6 +120,7 @@ def _calc_hursmin(ds,dask_compute=False):
 
     return hursmin
 
+# Organize ERA5 dataset
 def _organize_era5(ds):
 
     global_attrs = {'source_id': 'ERA5',
@@ -118,10 +133,13 @@ def _organize_era5(ds):
         'latitude': 'lat',
         })
 
+    # Clip geographic limits
     ds = h.trim_geolims(ds,geo_lims)
 
+    # Convert calendar to 365 day years or 'noleap'
     ds = ds.convert_calendar('noleap')
 
+    # Assign axes labels
     ds['lon'].attrs.update({
         'standard_name': 'longitude',
         'axis': 'X'
@@ -149,8 +167,10 @@ def process_era5(src,dask_load=False):
         mask_and_scale=True,
         )
     
+    # Get variable names for given dataset
     varnames = h.get_var_names(ds) #list(ds.keys())
 
+    # Identify which variable is in current dataset
     tasmax_bool = False
     pr_bool = False
     sfcWind_bool = False
