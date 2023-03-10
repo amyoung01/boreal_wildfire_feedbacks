@@ -15,15 +15,19 @@ library(R2jags) # Using R to Run 'JAGS' (Version: 0.7-1)
 # -----------------------------------------------------------------------------
 
 args <- commandArgs(trailingOnly = TRUE)
+jags_models <- args[1:length(args)]
 
-dataframe_dir <- args[1]
-results_dir <- args[2]
-jags_models <- args[3:length(args)]
+dataframe_dir <- "../data/dataframes"
+results_dir <- "../"
 
-aab <- read.csv(file.path(dataframe_dir, "annual_area_burned.csv"))
-era5 <- read.csv(file.path(dataframe_dir, "cffdrs-stats_era5_1979-2020.csv"))
-ecos_size <- read.csv(file.path(dataframe_dir, "ecoregion_size.csv"))
-treecov <- read.csv(file.path(dataframe_dir, "postfire_forest_growth.csv"))
+aab            <- read.csv(file.path(dataframe_dir,
+                                     "annual_area_burned.csv"))
+era5           <- read.csv(file.path(dataframe_dir,
+                                     "cffdrs-stats_era5_1979-2020.csv"))
+ecos_size      <- read.csv(file.path(dataframe_dir,
+                                     "ecoregion_size.csv"))
+treecov        <- read.csv(file.path(dataframe_dir,
+                                     "postfire_forest_growth.csv"))
 predictor_vars <- read.csv(file.path(dataframe_dir,
                                      "regression_predictors.csv"))
 
@@ -67,7 +71,7 @@ for (i in seq_along(unique_ecos)){
 
   S <- ecos_size$area_km2[ecos_size$ecos == unique_ecos[i]]
 
-  # Maximum Likelihood Estimates (MLE) for lognormal model
+  # Maximum Likelihood Estimates (MLE) for lognormal distribution
   aab_ref <- df_i$aab[df_i$year <= 1999]
   aab_ref_mle <- fitdistrplus::fitdist(aab_ref, "lnorm")
 
@@ -79,14 +83,14 @@ for (i in seq_along(unique_ecos)){
 
   # Data needed to run Bayesian model
   data_list <- list(
-                aab = df_i$aab,
-                BUI = df_i[[bui_var]],
-                ISI = df_i[[isi_var]],
-                S = S,
-                n = nrow(df_i),
-                aab_meanlog = aab_ref_mle$estimate["meanlog"],
-                aab_selog = aab_ref_mle$sd["meanlog"]
-                )
+    aab = df_i$aab,
+    BUI = df_i[[bui_var]],
+    ISI = df_i[[isi_var]],
+    S = S,
+    n = nrow(df_i),
+    aab_meanlog = aab_ref_mle$estimate["meanlog"],
+    aab_selog = aab_ref_mle$sd["meanlog"]
+    )
 
   # For each model (here using a lognormal and Gamma distributions)
   for (j in seq_along(jags_models)){
@@ -110,21 +114,19 @@ for (i in seq_along(unique_ecos)){
 
       # Use R2jags package to run Bayesian models
       jags_output <- R2jags::jags(
-                      data = data_list,
-                      parameters.to.save = params_to_save,
-                      model.file = jags_models[j],
-                      n.chains = n_chains,
-                      n.iter = n_iter,
-                      n.burnin = burn_in_steps,
-                      n.thin = thin_steps,
-                      quiet = TRUE
-                      )
+        data = data_list,
+        parameters.to.save = params_to_save,
+        model.file = jags_models[j],
+        n.chains = n_chains,
+        n.iter = n_iter,
+        n.burnin = burn_in_steps,
+        n.thin = thin_steps,
+        quiet = TRUE
+        )
 
       export_fn <- file.path(results_dir,
-                      sprintf("jags-results_%s_%s-model_%d.RData",
-                          distr, s, unique_ecos[i]
-                          )
-                      )
+                             sprintf("jags-results_%s_%s-model_%d.RData",
+                                     distr, s, unique_ecos[i]))
 
       # Save output as RData file
       save(jags_output, file = export_fn)
