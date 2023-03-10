@@ -18,7 +18,7 @@ args <- commandArgs(trailingOnly = TRUE)
 jags_models <- args[1:length(args)]
 
 dataframe_dir <- "../data/dataframes"
-results_dir <- "../"
+results_dir <- "../data/model_results"
 
 aab            <- read.csv(file.path(dataframe_dir,
                                      "annual_area_burned.csv"))
