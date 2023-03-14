@@ -1,25 +1,20 @@
-# -----------------------------------------------------------------------------
-# Initialize workspace
-# -----------------------------------------------------------------------------
-rm(list = ls()) # Remove variables from current environment
+# Install required libraries ---------------------------------------------------
+# Extension of 'data.frame' (Version: 1.14.6)
+suppressPackageStartupMessages(library(data.table))
+# Fit Parametric Distributions (Version 1.1-8)
+suppressPackageStartupMessages(library(fitdistrplus))
+# Using R to Run 'JAGS' (Version: 0.7-1)
+suppressPackageStartupMessages(library(R2jags))
 
-# -----------------------------------------------------------------------------
-# Install required libraries
-# -----------------------------------------------------------------------------
-library(data.table) # Extension of 'data.frame' (Version: 1.14.6)
-library(fitdistrplus) # Fit Parametric Distributions (Version 1.1-8)
-library(R2jags) # Using R to Run 'JAGS' (Version: 0.7-1)
-
-# -----------------------------------------------------------------------------
-# Import arguments
-# -----------------------------------------------------------------------------
-
+# Import arguments -------------------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
-jags_models <- args[1:length(args)]
+jags_models <- args[seq_along(args)]
 
-dataframe_dir <- "../data/dataframes"
-results_dir <- "../data/model_results"
+# Set working directories ------------------------------------------------------
+dataframe_dir <- "./data/dataframes"
+results_dir <- "./data/model_results"
 
+# Read in data files -----------------------------------------------------------
 aab            <- read.csv(file.path(dataframe_dir,
                                      "annual_area_burned.csv"))
 era5           <- read.csv(file.path(dataframe_dir,
@@ -31,11 +26,10 @@ treecov        <- read.csv(file.path(dataframe_dir,
 predictor_vars <- read.csv(file.path(dataframe_dir,
                                      "regression_predictors.csv"))
 
+# Merge climate dataframe and annual area burned data frame --------------------
 df <- data.table::merge.data.table(aab, era5, by = c("year", "ecos"))
 
-# -----------------------------------------------------------------------------
-# Modify annual area burned variable for analysis
-# -----------------------------------------------------------------------------
+# Modify annual area burned variable for analysis ------------------------------
 
 # Shorten column name of annual area burned for analysis
 names(df)[names(df) == "annual_area_burned_km2"] <- "aab"
@@ -44,31 +38,31 @@ names(df)[names(df) == "annual_area_burned_km2"] <- "aab"
 df$aab[is.na(df$aab)] <- 0
 df$aab[df$aab < 4] <- runif(sum(df$aab < 4), 0, 4)
 
-# -----------------------------------------------------------------------------
-# Filter by analysis years (1980-2020) and identify unique ecoregions
-# -----------------------------------------------------------------------------
-# Limit years to 1980-2020
+# Filter by analysis years (1980-2020) and identify unique ecoregions ----------
 df <- df[(df$year >= 1980) & (df$year <= 2020), ]
 unique_ecos <- unique(df$ecos)
 
-# -----------------------------------------------------------------------------
-# Setting for Bayesian model runs
-# -----------------------------------------------------------------------------
+# Initializing Bayesian model runs ---------------------------------------------
 n_chains <- 8
 burn_in_steps <- 10000
 thin_steps <- 80
 num_saved_steps <- 2000
 n_iter <- ceiling(burn_in_steps + (num_saved_steps * thin_steps) / n_chains)
 
-sims <- c("feedback", "no-feedback")
+# Setting up to feedback types to model ----------------------------------------
+feedback_type <- c("feedback", "no-feedback")
 
-for (i in seq_along(unique_ecos)){
+# For each ecoregion run set of Bayesian GLMs ----------------------------------
+for (i in seq_along(unique_ecos)) {
 
+  # Subset data for current ecoregion
   df_i <- df[df$ecos == unique_ecos[i], ]
 
+  # Two options for including feedback curves
   w <- treecov$w[treecov$ecos == unique_ecos[i]]
   w_null <- rep(0, length(w))
 
+  # Size of current ecoregion
   S <- ecos_size$area_km2[ecos_size$ecos == unique_ecos[i]]
 
   # Maximum Likelihood Estimates (MLE) for lognormal distribution
@@ -92,21 +86,21 @@ for (i in seq_along(unique_ecos)){
     aab_selog = aab_ref_mle$sd["meanlog"]
     )
 
-  # For each model (here using a lognormal and Gamma distributions)
-  for (j in seq_along(jags_models)){
+  # For each model (here using a Gamma distributions)
+  for (j in seq_along(jags_models)) {
 
     jags_model_header <- readLines(jags_models[j], n = 2)
     distr <- strsplit(jags_model_header[[1]], " ")[[1]][-c(1, 2)]
     params_to_save <- strsplit(jags_model_header[[2]], " ")[[1]][-c(1, 2)]
 
     # Process feedback model and no feedback model
-    for (s in sims){
+    for (feedback in feedback_type) {
 
-      if (s == "feedback") {
+      if (feedback == "feedback") {
 
         data_list$w <- w
 
-      } else if (s == "no-feedback") {
+      } else if (feedback == "no-feedback") {
 
         data_list$w <- w_null
 
@@ -124,9 +118,13 @@ for (i in seq_along(unique_ecos)){
         quiet = TRUE
         )
 
+      # Add years covered in modeling to jags output for export, will be used
+      # in subsequent functions
+      jags_output$model$year <- df_i$year
+
       export_fn <- file.path(results_dir,
                              sprintf("jags-results_%s_%s-model_%d.RData",
-                                     distr, s, unique_ecos[i]))
+                                     distr, feedback, unique_ecos[i]))
 
       # Save output as RData file
       save(jags_output, file = export_fn)

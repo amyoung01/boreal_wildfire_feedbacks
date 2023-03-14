@@ -1,14 +1,10 @@
-# -----------------------------------------------------------------------------
-# Initialize workspace
-# -----------------------------------------------------------------------------
+# Initialize workspace ---------------------------------------------------------
 set.seed(314159)
 
 # TODO: how to read in config.yaml file into R
-gcms <- c("EC-Earth3-Veg", "MPI-ESM1-2-HR", "MRI-ESM2-0", "CNRM-CM6-1-HR")
+src <- c("era5", "EC-Earth3-Veg", "MPI-ESM1-2-HR", "MRI-ESM2-0", "CNRM-CM6-1-HR")
 
-# -----------------------------------------------------------------------------
-# Read in list of model files 
-# -----------------------------------------------------------------------------
+# Read in list of model files --------------------------------------------------
 files <- list.files(path = "data/model_results",
                     pattern = "\\.RData$")
 
@@ -18,19 +14,18 @@ ecos_size <- read.csv(ecos_size)
 regression_forms <- read.csv("data/dataframes/regression_predictors.csv")
 
 unique_ecos <- ecos_size$ecos
-pred_yrs <- seq(2021, 2099)
 
 # No projected fire year may be larger than 6 times the max historical
 max_frac <- 6
 
-# -----------------------------------------------------------------------------
-# Make projections of future area burned for each gcm
-# -----------------------------------------------------------------------------
-for (mdl in gcms) {
+# Make projections of future area burned for each gcm --------------------------
+for (mdl in src) {
 
-    pred_vars_file <- sprintf("data/dataframes/cffdrs-stats_%s_1980-2099.csv",
-                               mdl)
+    pred_vars_file <- list.files(path = "data/dataframes",
+                                 pattern = sprintf("cffdrs-stats_%s.*", mdl),
+                                 full.names = TRUE)
     pred_vars <- read.csv(pred_vars_file)
+    pred_yrs <- unique(pred_vars$year)
 
     for (f in seq_along(files)) {
 
@@ -56,6 +51,7 @@ for (mdl in gcms) {
                            bui = pred_vars_i[[bui_var]],
                            isi = pred_vars_i[[isi_var]])
 
+        year <- jags_output$model$year
         aab <- jags_output$model$data()$aab
         w <- jags_output$model$data()$w
         S <- jags_output$model$data()$S
@@ -75,15 +71,19 @@ for (mdl in gcms) {
         # Vector of shape parameter estimates (N x 1)
         shape <- as.numeric(sims$shape)
 
-        # Initialize time series of historical aab for fire-fuel feedback 
+        # Initialize time series of historical aab for fire-fuel feedback
         # effects to be included. Projections start in 2021, leaving 41 years
         # of observed aab to include in this history. Our feedback model relies
         # on a 60 year record, so we simulated the remaining 19 years prior to
-        # 1980 based on historical aab from 1980-1999. There is one row for 
+        # 1980 based on historical aab from 1980-1999. There is one row for
         # each simulation one column for each year.
-        for (p in 1:N) {
-            prior_aab[p, ] <- c(rep(aab_init[p], length(w) - length(aab)), aab)
-        }
+
+        nyr_after_start <- pred_yrs[1] - year[1]
+        n_aab_init <- length(w) - nyr_after_start
+
+        prior_aab <- cbind(matrix(rep(aab_init, n_aab_init), ncol = n_aab_init),
+                           matrix(rep(aab, N), nrow = N, byrow = TRUE))
+        prior_aab <- prior_aab[, seq_along(w)]d
 
         for (yr in pred_yrs) {
 
@@ -97,7 +97,7 @@ for (mdl in gcms) {
 
             }
 
-            # Set offset terms for currenet year
+            # Set offset terms for current year
             M_i <- as.numeric(S - (prior_aab %*% as.matrix(w)))
             M_i <- ifelse(M_i > 1, log(M_i), log(1))
 

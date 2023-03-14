@@ -139,3 +139,7 @@ with tqdm(total=N,disable=not verbose) as pbar:
 export_df = pd.DataFrame.from_dict(export_dict)
 export_fn = root_dir / '../data/dataframes/treecov_postfire.csv'
 export_df.to_csv(export_fn, index=False)
+
+if __name__ == '__main__':
+
+    None
