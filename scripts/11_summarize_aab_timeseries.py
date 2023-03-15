@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
+
+# Import required libraries
 import yaml
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
 
+# Read in configuration list from 
 config_fn = Path('../wildfire_analysis/config.yaml')
 
 with open(config_fn, 'r') as config_fn:
