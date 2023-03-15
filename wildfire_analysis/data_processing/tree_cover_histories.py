@@ -1,5 +1,5 @@
+# Import required libraries
 import yaml
-from io import StringIO
 from pathlib import Path
 
 import geopandas as gpd
@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from wildfire_analysis.utils import helpers as h
 
+# Suppress warnings
 import warnings
 warnings.filterwarnings('ignore',
                         message='invalid value encountered in difference')
@@ -20,6 +21,7 @@ warnings.filterwarnings('ignore',
 warnings.filterwarnings('ignore',
                         message='invalid value encountered in unary_union')
 
+# Set verbose to True to print out progress bar
 verbose = True
 
 # Import config file and read in parameters needed for data processing
@@ -34,35 +36,42 @@ with open(config_fn,'r') as config_file:
     fire_yr = config_params['TIME']['fire_yr']
     treecov_yr = config_params['TIME']['treecov_yr']
 
-
+# Create ranges for fire years and mod44b years
 fire_yr = range(fire_yr[0],fire_yr[1]+1)
 treecov_yr = range(treecov_yr[0],treecov_yr[1]+1)
 
+# Read in projected ecoregions shapefile
 fn = data_dir / 'ecoregions/ecos_reproj.shp'
 ecos = gpd.read_file(fn)
 
+# Read in fire history shapefile
 fn = data_dir / 'fire/shapefiles/AK_Canada_large_fire_history.shp'
 firehx_shp = gpd.read_file(fn)
 firehx_shp = firehx_shp.sort_values(by='FIREYR')
 firehx_shp = firehx_shp.reset_index(drop=True)
 
+# Record fire years and fire size as numpy array objects
 fire_yr = firehx_shp.FIREYR.values
 fire_size = firehx_shp.HECTARES.values
 
+# Set up empty dictionary to record results
 export_dict = {"fire_yr": [],
             "ecos": [],
             "area_burned_km2": [],
             "time_since_fire": [],
             "tree_cover_mean": []}
 
+# Total number of fire permiters to process
 N = firehx_shp.shape[0]
 
 with tqdm(total=N,disable=not verbose) as pbar:
 
     for i in range(0,N):
 
+        # Subset ith shapefile
         fire_i = firehx_shp.iloc[[i],:]
 
+        # Determine what ecoregion the current fire perimeter is in
         ecos_overlap = fire_i.overlay(ecos,how="intersection")
 
         if ecos_overlap.shape[0] == 0:
@@ -86,14 +95,19 @@ with tqdm(total=N,disable=not verbose) as pbar:
 
             continue
 
+        # Subset fire history dataset to find all fires that occur after the 
+        # ith one
         out_id = fire_yr > fire_yr[i]
         fire_subset_i = firehx_shp.loc[out_id]
 
+        # Further subset to find all fire perimeters that occurred near ith one
         spatial_index = fire_subset_i.sindex
         bounds = tuple(fire_i.bounds.values[0])
         out_id = list(spatial_index.intersection(bounds))
         fire_subset_i = fire_subset_i.iloc[out_id].dissolve()
 
+        # Find all geometries within current fire perimeter that have not 
+        # experienced any documented reburning after it occurred
         fire_i_noreburn = fire_i.overlay(fire_subset_i,how="difference")
 
         if fire_i_noreburn.shape[0] == 0:
@@ -102,11 +116,15 @@ with tqdm(total=N,disable=not verbose) as pbar:
 
             continue
 
+        # Convert area burned values of no reburing geometrie(s) to km^2
         area_burned = np.round(fire_i_noreburn.area.values[0] * 1e-6,2)
 
+        # Get geometries and put into list
         geoms = fire_i_noreburn.geometry.values
         geoms = [mapping(geoms[0])]
 
+        # Go through each year we have modis tree cover data for and record 
+        # what the mean treecover is for each year after the fire occurred
         postfire_yr_id = np.flatnonzero(treecov_yr >= fire_yr[i] - 1)
 
         for j in postfire_yr_id:
@@ -132,14 +150,18 @@ with tqdm(total=N,disable=not verbose) as pbar:
 
             else:
 
-                export_dict["tree_cover_mean"].append(np.nanmean(treecov_values))
+                export_dict["tree_cover_mean"].append(
+                    np.nanmean(treecov_values)
+                    )
 
-        pbar.update()
+        pbar.update() # Update progress bar
 
+# Export recorded time since fire and tree cover values into csv file
 export_df = pd.DataFrame.from_dict(export_dict)
 export_fn = root_dir / '../data/dataframes/treecov_postfire.csv'
 export_df.to_csv(export_fn, index=False)
 
+# Don't automatically run when imported into another script
 if __name__ == '__main__':
 
     None
