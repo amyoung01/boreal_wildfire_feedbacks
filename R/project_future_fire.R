@@ -109,10 +109,10 @@ for (mdl in src) {
             #   betas is a N x 3 matrix of paremeter estimates
             #   M_i is a N x 1 is a vector of offset terms
             #   mu is a N x 1 vector of predictions of aab on a log scale
-            mu <- X %*% t(betas) + M_i
+            mu <- exp(X %*% t(betas) + M_i)
 
             # Get rate parameters needed for gamma distribution simulation
-            rate <- shape / exp(mu)
+            rate <- shape / mu
 
             # simulate a random sample from gamma distribution
             aab_i <- rgamma(N, shape = shape, rate = rate)

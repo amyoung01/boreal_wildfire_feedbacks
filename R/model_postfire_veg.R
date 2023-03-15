@@ -32,8 +32,8 @@ for (i in seq_along(ecos)) { # For each ecoregion ...
   sampsize_labs <- as.numeric(names(samp_size))
 
   # Need at least 5 observations to include in growth curve
-  tsf_min_sampsize <- sampsize_labs[(samp_size > 5) & (sampsize_labs > xmin)
-                                    & (sampsize_labs > xmin)]
+  tsf_min_sampsize <- sampsize_labs[(samp_size > 5) & (sampsize_labs >= xmin)
+                                    & (sampsize_labs <= xmax)]
 
   # Subset to keep observations that have minimum required sample size
   id_to_keep <- avg_tsf$time_since_fire %in% tsf_min_sampsize
