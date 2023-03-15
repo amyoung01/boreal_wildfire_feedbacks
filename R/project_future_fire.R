@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # Initialize workspace ---------------------------------------------------------
 set.seed(314159)
 

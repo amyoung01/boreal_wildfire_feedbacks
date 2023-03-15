@@ -1,9 +1,8 @@
+#!/usr/bin/env Rscript
+
 # Install required libraries ---------------------------------------------------
-# Extension of 'data.frame' (Version: 1.14.6)
 suppressPackageStartupMessages(library(data.table))
-# Fit Parametric Distributions (Version 1.1-8)
 suppressPackageStartupMessages(library(fitdistrplus))
-# Using R to Run 'JAGS' (Version: 0.7-1)
 suppressPackageStartupMessages(library(R2jags))
 
 # Import arguments -------------------------------------------------------------

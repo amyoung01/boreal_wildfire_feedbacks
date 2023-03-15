@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # Shape Constrained Additive Models (Version 1.2-13)
 suppressPackageStartupMessages(library(scam))
 

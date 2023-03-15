@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 suppressPackageStartupMessages(library(remotes))
 
 list_of_packages <- c("actuar", "car", "data.table", "fitdistrplus", "R2jags",
