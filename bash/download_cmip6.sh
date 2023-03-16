@@ -18,3 +18,6 @@ for gcm in ${GCMS[@]}; do
   bash $WDIR/bash/z_wget/wget-$gcm.sh -H
 
 done
+
+# Change directory back to working directory
+cd $WDIR
