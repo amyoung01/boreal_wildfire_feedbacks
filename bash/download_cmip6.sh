@@ -12,10 +12,10 @@ GCMS=( \
 
 for gcm in ${GCMS[@]}; do
 
-  mkdir -p $WDIR/data/raw/climate/cmip6/$gcm
-  cd $WDIR/data/raw/climate/cmip6/$gcm
+  mkdir -p $WDIR/../data/raw/climate/cmip6/$gcm
+  cd $WDIR/../data/raw/climate/cmip6/$gcm
 
-  bash $WDIR/bash/z_wget/wget-$gcm.sh -H
+  bash $WDIR/z_wget/wget-$gcm.sh -H
 
 done
 
