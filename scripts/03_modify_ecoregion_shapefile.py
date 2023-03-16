@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pathlib import Path
 
 import geopandas as gpd
@@ -16,7 +18,7 @@ ecos_to_keep = {'ECO_ID': [50602.0,50603.0,50604.0,50605.0,50606.0,50607.0,
 # identified and exported using QGIS 3.28.
 fn = root_dir / '../data/raw/ecoregions/official/wwf_terr_ecos.shp'
 ecos = gpd.read_file(fn)
-poly_to_remove = gpd.read_file(root_dir/ '../data/ancillary/to_remove_east_can.shp')
+poly_to_remove = gpd.read_file(root_dir / '../data/ancillary/to_remove_east_can.shp')
 
 # Subset world ecoregions map to those only in study area.
 match_ecos_id = ecos.isin(ecos_to_keep)

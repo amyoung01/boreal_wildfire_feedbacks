@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+'''
+ADD DOCSTRING
+'''
+
 #%% Import libraries
 from pathlib import Path
 import sys

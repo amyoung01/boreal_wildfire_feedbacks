@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name="wildfire_analysis",
-      version="0.1",
+      version="1.0",
       packages=(
             find_packages() + 
             find_packages(where='./utils') + 
