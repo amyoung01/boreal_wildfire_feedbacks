@@ -34,8 +34,11 @@ for (i in seq_along(ecos)) { # For each ecoregion ...
   sampsize_labs <- as.numeric(names(samp_size))
 
   # Need at least 5 observations to include in growth curve
-  tsf_min_sampsize <- sampsize_labs[(samp_size > 5) & (sampsize_labs >= xmin)
-                                    & (sampsize_labs <= xmax)]
+  id_to_keep <- samp_size > 5 &
+                sampsize_labs >= xmin &
+                sampsize_labs <= xmax
+
+  tsf_min_sampsize <- sampsize_labs[id_to_keep]
 
   # Subset to keep observations that have minimum required sample size
   id_to_keep <- avg_tsf$time_since_fire %in% tsf_min_sampsize
@@ -44,6 +47,7 @@ for (i in seq_along(ecos)) { # For each ecoregion ...
   # Fit monotonically increasing spline function to tree cover data
   fit <- scam::scam(tree_cover_mean ~ s(time_since_fire, bs = "mpi", m = 1),
                     data = avg_tsf)
+                    
   # Predict values for full range of time since fire values
   # considered (xmin-xmax)
   newdata <- data.frame(time_since_fire = seq(xmin, xmax))
@@ -67,5 +71,5 @@ for (i in seq_along(ecos)) { # For each ecoregion ...
 }
 
 # Export all results to csv file
-fn <- "data/dataframes/postfire_forest_growth.csv"
+fn <- "data/dataframes/avg_postfire_forest_growth.csv"
 write.csv(export_df, fn, row.names = FALSE)

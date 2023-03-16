@@ -10,6 +10,7 @@ args <- commandArgs(trailingOnly = TRUE)
 jags_models <- args[seq_along(args)]
 
 # Set working directories ------------------------------------------------------
+ancillary_dir <- "./data/ancillary"
 dataframe_dir <- "./data/dataframes"
 results_dir <- "./data/model_results"
 
@@ -18,11 +19,11 @@ aab            <- read.csv(file.path(dataframe_dir,
                                      "annual_area_burned.csv"))
 era5           <- read.csv(file.path(dataframe_dir,
                                      "cffdrs-stats_era5_1979-2020.csv"))
-ecos_size      <- read.csv(file.path(dataframe_dir,
-                                     "ecoregion_size.csv"))
 treecov        <- read.csv(file.path(dataframe_dir,
-                                     "postfire_forest_growth.csv"))
-predictor_vars <- read.csv(file.path(dataframe_dir,
+                                     "avg_postfire_forest_growth.csv"))
+ecos_size      <- read.csv(file.path(ancillary_dir,
+                                     "ecoregion_size.csv"))
+predictor_vars <- read.csv(file.path(ancillary_dir,
                                      "regression_predictors.csv"))
 
 # Merge climate dataframe and annual area burned data frame --------------------

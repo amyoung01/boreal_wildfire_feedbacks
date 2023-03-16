@@ -291,10 +291,9 @@ def cffdrs_calc(tas,pr,sfcWind,hurs,mon,ffmc0=85.0,dmc0=6.0,dc0=15.0):
         dsr[i,...] = dsr_calc(
             fwi[i,...])
 
-        if i > 0:
-            ffmc0 = ffmc[i,...]
-            dmc0 = dmc[i,...]
-            dc0 = dc[i,...]
+        ffmc0 = ffmc[i,...]
+        dmc0 = dmc[i,...]
+        dc0 = dc[i,...]
 
     return {
         'ffmc': ffmc,

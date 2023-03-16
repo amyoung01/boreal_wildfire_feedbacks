@@ -15,7 +15,7 @@ verbose = False
 if (sys.argv[-1] == "--verbose"):
     verbose = True
 
-token = os.environ.get('TOKEN')
+token = os.environ.get('EARTHDATA_TOKEN')
 
 status_response = True
 
