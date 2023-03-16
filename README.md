@@ -15,10 +15,10 @@ The following code will allow for downloading and runnning of the analysis.
 
 ```bash
 
-$ curl -L -o boreal_wildfire_feedbacks.zip https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip
-$ unzip boreal_wildfire_feedbacks.zip
+$ curl -LJO https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip
+$ unzip boreal_wildfire_feedbacks-main.zip
 
-$ bash boreal_wildfire_feedbacks/run_analysis.sh
+$ bash boreal_wildfire_feedbacks-main/run_analysis.sh
 
 ```
 
