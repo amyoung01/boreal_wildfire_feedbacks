@@ -11,7 +11,7 @@ scenarios.
 
 
 
-The following code will allow for downloading and runnning of the analysis.\
+The following code will allow for downloading and runnning of the analysis.  
 
 <span style="color:red"> **WARNING** </span>: Will run the full analysis, including installing libraries and 
 downloading all datasets. Advised to do this step-by-step.
