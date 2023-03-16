@@ -3,10 +3,6 @@
 # available here: https://appeears.earthdatacloud.nasa.gov/api/
 export TOKEN=$1
 
-# Activate conda environment
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py39
-
 # Set up directory names
 
 # Find directory of current file, source: https://stackoverflow.com/a/246128

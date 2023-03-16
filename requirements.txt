@@ -1,3 +1,4 @@
+cdsapi==0.5.1
 dask==2022.12.1
 gdal==3.6.2
 geopandas==0.12.2

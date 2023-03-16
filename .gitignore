@@ -6,6 +6,7 @@ data/raw/*
 data/processed/*
 data/model_results/*
 
+bash/wget/
 build/
 manuscript/
 stan/

@@ -5,8 +5,6 @@ setup(name="wildfire_analysis",
       packages=(
             find_packages() + 
             find_packages(where='./utils') + 
-            find_packages(where='./data') + 
-            find_packages(where='./cffdrs') + 
-            find_packages(where='./models'))
+            find_packages(where='./data_processing'))
       )
 

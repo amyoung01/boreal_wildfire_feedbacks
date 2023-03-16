@@ -4,10 +4,6 @@
 # Initialize environment and variables
 ###############################################################################
 
-# Activate conda environment
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate py39
-
 # Set up directory names
 
 # Find directory of current file, source: https://stackoverflow.com/a/246128
@@ -53,8 +49,3 @@ for yr in ${YRS[@]}; do
   gdal_edit.py -mo ${BAND_META}=${yr} $RAST_FN
 
 done
-
-# Deactivate conda environment
-conda deactivate
-
-# End of script ---------------------------------------------------------------
