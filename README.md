@@ -16,7 +16,7 @@ The following code will allow for downloading and runnning of the analysis.
 ```bash
 
 $ curl -L -o boreal_wildfire_feedbacks.zip https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip
-$ unzip -d boreal_wildfire_feedbacks
+$ unzip boreal_wildfire_feedbacks.zip
 
 $ bash boreal_wildfire_feedbacks/run_analysis.sh
 
