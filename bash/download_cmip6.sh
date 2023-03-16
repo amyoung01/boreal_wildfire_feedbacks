@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CWD=$( pwd )
+
 # Find directory of current file, source: https://stackoverflow.com/a/246128
 WDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -20,4 +22,4 @@ for gcm in ${GCMS[@]}; do
 done
 
 # Change directory back to working directory
-cd $WDIR
+cd $CWD
