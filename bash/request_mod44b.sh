@@ -37,5 +37,7 @@ sleep 5m
 cd $WDIR/../wildfire_analysis/data_processing
 python download_mod44b.py --verbose
 
+rm $WDIR/../tmp/mod44b_request_submission.json
+
 echo
 echo "Finished downloading MOD44B datasets into $DEST"
