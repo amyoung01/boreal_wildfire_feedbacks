@@ -14,7 +14,7 @@ from numpy import square, sqrt # For calculating wind speed from u, v vectors
 from wildfire_analysis.utils import helpers as h
 
 # Get global values from configuration file
-config_fn = Path(__file__).parent / '../config.yaml'
+config_fn = Path(h.get_root_dir()) / 'config.yaml'
 
 with open(config_fn,'r') as config_file:
 
@@ -25,8 +25,10 @@ with open(config_fn,'r') as config_file:
 # Suppress dask warnings on chunk size
 dask.config.set({"array.slicing.split_large_chunks": False})
 
+# General processing of CMIP6 data
 def _organize_cmip(ds):
 
+    # Variable/coordinates not needed and can drop
     vars_to_drop = ['height','time_bnds','lat_bnds','lon_bnds','time_bounds',
                     'lat_bounds','lon_bounds']
 
@@ -50,18 +52,21 @@ def _organize_cmip(ds):
 
     return ds
 
+# Convert temperature to degrees C
 def _process_tasmax(da):
 
     da = xc.units.convert_units_to(da,'degC')
     
     return da
 
+# Convert precip to mm/day
 def _process_pr(da):
 
      da = xc.units.convert_units_to(da,'mm/day')
 
      return da
 
+# Calculate mean wind speed vector from u and v surface wind
 def _process_sfcWind_from_uv(ds):
 
     # Convert to horizontal wind speed
@@ -76,18 +81,21 @@ def _process_sfcWind_from_uv(ds):
 
     return sfcWind
 
+# Convert wind speed to km/hour
 def _process_sfcWind(da):
 
     da = xc.units.convert_units_to(da,'km/hour')
     
     return da
 
+# Ensure relative humidity is bounded between 0-100%
 def _process_hursmin(da):
 
     da = da.clip(min=0.0,max=100.0)
 
     return da
 
+# Process CMIP6 Dataset
 def process_cmip6(src):
 
     da = xr.open_mfdataset(
@@ -134,10 +142,6 @@ def process_cmip6(src):
 
     return ds
 
-def main():
-
-    return None
-
 if __name__ == '__main__':    
 
-    main()
+    None

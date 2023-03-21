@@ -1,5 +1,4 @@
 """
-
 This set of functions performs the CFFDRS calculations described in
 Van Wagner 1985 and 1987 for numpy arrays.
 
@@ -32,7 +31,34 @@ warnings.filterwarnings('ignore')
 # ----------------------------------------------------------------------------
 # Fine Fuel Moisture Code
 # ----------------------------------------------------------------------------
-def ffmc_calc(tas, pr, sfcWind, hurs, ffmc0):
+def ffmc_calc(tas, pr, sfcWind, hurs, ffmc0: np.ndarray=85.0) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Fine Fuel Moisture Code (FFMC) from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    tas: float or numpy.ndarray
+        Near-surface (i.e. 2-m) air temperature in degrees Celsius
+    pr: float or numpy.ndarray
+        Total daily precipitation in mm/day
+    sfcWind: float or numpy.ndarray
+        10-m wind speed in km/hour
+    hurs: float or numpy.ndarray
+        Near-surface relative humidity in percent (%). Bound between 0-100
+    ffmc0: float or numpy.ndarray, optional
+        Fine Fuel Moisture Code for previous day. If not given assumed to be 
+        85.0 for first day, and the rest of the calculations proceed through
+        time using the previous days ffmc values as they are calculated
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with fine fuel moisture code output
+    """    
 
     ro = np.copy(pr) # Copy precip data into new numpy array
 
@@ -84,7 +110,32 @@ def ffmc_calc(tas, pr, sfcWind, hurs, ffmc0):
 # ----------------------------------------------------------------------------
 # Duff Moisture Code
 # ----------------------------------------------------------------------------
-def dmc_calc(tas, pr, hurs, mon, dmc0):
+def dmc_calc(tas, pr, hurs, mon, dmc0: np.ndarray=6.0) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Duff Moisture Code (DMC) from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    tas: float or numpy.ndarray
+        Near-surface (i.e. 2-m) air temperature in degrees Celsius
+    pr: float or numpy.ndarray
+        Total daily precipitation in mm/day
+    hurs: float or numpy.ndarray
+        Near-surface relative humidity in percent (%). Bound between 0-100
+    dmc0: float or numpy.ndarray, optional
+        Duff moisture for previous day. If not given assumed to be 
+        6.0 for first day, and the rest of the calculations proceed through
+        time using the previous days dmc values as they are calculated
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with fine duff moisture code output
+    """      
 
     # Initialize parameters
     ro = np.copy(pr) # Re-name pr as ro
@@ -116,15 +167,37 @@ def dmc_calc(tas, pr, hurs, mon, dmc0):
 # ----------------------------------------------------------------------------
 # Drought Code
 # ----------------------------------------------------------------------------
-def dc_calc(tas, pr, mon, dc0):
+def dc_calc(tas, pr, mon, dc0: np.ndarray=15.0) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Drought Code (DMC) from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    tas: float or numpy.ndarray
+        Near-surface (i.e. 2-m) air temperature in degrees Celsius
+    pr: float or numpy.ndarray
+        Total daily precipitation in mm/day
+    dc0: float or numpy.ndarray, optional
+        Drought for previous day. If not given assumed to be 
+        15.0 for first day, and the rest of the calculations proceed through
+        time using the previous days dc values as they are calculated
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with fine drought code output
+    """       
 
     ro = np.copy(pr)
     Do = np.copy(dc0)
 
     tas[tas < -2.8] = -2.8
 
-    Lf = np.array([
-        -1.6,-1.6,-1.6,0.9,3.8,5.8,6.4,5.0,2.4,0.4,-1.6,-1.6])
+    Lf = np.array([-1.6,-1.6,-1.6,0.9,3.8,5.8,6.4,5.0,2.4,0.4,-1.6,-1.6])
 
     rd = np.where(ro > 2.8,0.83*ro - 1.27,0.0) # ....................... Eq. 18
 
@@ -145,7 +218,26 @@ def dc_calc(tas, pr, mon, dc0):
 # -----------------------------------------------------------------------------
 # Initial Spread Index
 # -----------------------------------------------------------------------------
-def isi_calc(ffmc, sfcWind):
+def isi_calc(ffmc, sfcWind) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Initial Spread Index from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    ffmc: float or numpy.ndarray
+        Current day's Fine Fuel Moisture Code
+    sfcWind: float or numpy.ndarray
+        10-m wind speed in km/hour
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with initial spread index output
+    """       
 
     m = 147.2 * (101.0-ffmc)/(59.5+ffmc) # .............................. Eq. 1
                                          # (See Van Wagner 1987 p. 20)
@@ -161,7 +253,26 @@ def isi_calc(ffmc, sfcWind):
 # -----------------------------------------------------------------------------
 # Build Up Index
 # -----------------------------------------------------------------------------
-def bui_calc(dmc, dc):
+def bui_calc(dmc, dc) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Build Up Index from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    dmc: float or numpy.ndarray
+        Current day's duff moisture code
+    dc: float or numpy.ndarray
+        Current day's drought code
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with build-up index output
+    """     
 
     P = np.copy(dmc)
     D = np.copy(dc)
@@ -181,7 +292,26 @@ def bui_calc(dmc, dc):
 # -----------------------------------------------------------------------------
 # Fire Weather Index
 # -----------------------------------------------------------------------------
-def fwi_calc(isi, bui):
+def fwi_calc(isi, bui) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Fire Weather Index from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    isi: float or numpy.ndarray
+        Current day's initial spread index
+    bui: float or numpy.ndarray
+        Current day's build up index
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with fire weather index output
+    """     
 
     R = np.copy(isi)
     U = np.copy(bui)
@@ -201,13 +331,39 @@ def fwi_calc(isi, bui):
 # -----------------------------------------------------------------------------
 # Daily Severity Rating
 # -----------------------------------------------------------------------------
-def dsr_calc(fwi):
+def dsr_calc(fwi) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Computes Daily Severity Rating from the Canadian Forest Fire 
+    Danger Rating System (CFFDFRS).
+
+    Parameters
+    ----------
+    fwi: float or numpy.ndarray
+        Current day's fire weather index
+
+    Returns
+    -------
+    numpy.ndarray
+        A numpy.ndarray with daily severity rating output
+    """         
 
     dsr = 0.0272 * fwi**1.77 # ......................................... Eq. 31
 
     return dsr[...]
 
-def cffdrs_calc(tas,pr,sfcWind,hurs,mon,ffmc0=85.0,dmc0=6.0,dc0=15.0):
+def cffdrs_calc(
+        tas: np.ndarray,
+        pr: np.ndarray,
+        sfcWind: np.ndarray,
+        hurs: np.ndarray,
+        mon,
+        ffmc0: np.ndarray=85.0,
+        dmc0: np.ndarray=6.0,
+        dc0: np.ndarray=15.0
+        ) -> dict:
 
     """
     Description
@@ -218,25 +374,25 @@ def cffdrs_calc(tas,pr,sfcWind,hurs,mon,ffmc0=85.0,dmc0=6.0,dc0=15.0):
 
     Parameters
     ----------
-    tas: float or numpy array of floats
+    tas: float or numpy.ndarray
         Near-surface (i.e. 2-m) air temperature in degrees Celsius
-    pr: float or numpy array of floats
+    pr: float or numpy.ndarray
         Total daily precipitation in mm/day
-    sfcWind: float or numpy array of floats
+    sfcWind: float or numpy.ndarray
         10-m wind speed in km/hour
-    hurs: float or numpy array of floats
+    hurs: float or numpy.ndarray
         Near-surface relative humidity in percent (%). Bound between 0-100
-    mon: int or numpy array of integers
-        Month values (1-12) for each day of year included in input array
-    ffmc0: float or numpy array of floats, optional
+    mon: int or numpy.ndarray(dtype=int)
+        Month values (1-12) for each day of year included in input array.
+    ffmc0: float or numpy.ndarray, optional
         Fine Fuel Moisture Code for previous day. If not given assumed to be 
         85.0 for first day, and the rest of the calculations proceed through
         time using the previous days ffmc values as they are calculated
-    dmc0: float or numpy array of floats, optional
+    dmc0: float or numpy.ndarray, optional
         Duff Moisture Code for previous day. If not given assumed to be 
         6.0 for first day, and the rest of the calculations proceed through
         time using the previous days ffmc values as they are calculated
-    dc0: float or numpy array of floats, optional
+    dc0: float or numpy.ndarray, optional
         Drought Code for previous day. If not given assumed to be 
         15.0 for first day, and the rest of the calculations proceed through
         time using the previous days ffmc values as they are calculated

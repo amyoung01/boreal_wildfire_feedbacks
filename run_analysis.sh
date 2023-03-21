@@ -16,12 +16,11 @@
 # 1. miniconda (conda version 4.12.0) 
 # 2. homebrew (3.6.21)
 # 3. curl (7.84.0)
-# 4. Login ability to download data from the following sources:
+# 4. Login ability to download data from the following public data sources:
 #     - ERA5 Climate Data: https://cds.climate.copernicus.eu/api-how-to
 #     - CMIP6 GCM Output LLNL node: https://esgf-node.llnl.gov/projects/cmip6/
 #     - NASA AppEEARS for MODIS datasets: https://appeears.earthdatacloud.nasa.gov
-#
-#
+
 # Further pre-reqs installed via this script are:
 # 5. Using homebrew:
 #     - wget 1.21.3
@@ -32,6 +31,9 @@
 #     - dask=2022.12.1
 #     - gdal=3.6.2
 #     - geopandas=0.12.2
+#     - h5netcdf=1.1.0
+#     - h5py=3.7.0
+#     - netcdf4=1.6.2
 #     - numpy=1.23.5
 #     - pandas=1.5.2
 #     - pyproj=3.4.1
@@ -70,6 +72,9 @@ conda install -c conda-forge \
   dask=2022.12.1 \
   gdal=3.6.2 \
   geopandas=0.12.2 \
+  h5netcdf=1.1.0 \
+  h5py=3.7.0 \
+  netcdf4=1.6.2 \
   numpy=1.23.5 \
   pandas=1.5.2 \
   pyproj=3.4.1 \
@@ -110,6 +115,8 @@ EARTHDATA_TOKEN="[NEED TO INSERT EARTHDATA LOGIN TOKEN HERE]"
 # Add script directories to current PATH
 CWD=$( pwd )
 PATH=$PATH:$CWD/bash:$CWD/R:$CWD/scripts
+
+mkdir tmp # Create temporary directory to save intermediate datasets
 
 # -----------------------------------------------------------------------------
 # Download datasets 
@@ -165,6 +172,7 @@ ogr2ogr -f "ESRI Shapefile" \
 
 # -----------------------------------------------------------------------------
 # Bias correct GCM data 
+#   This script uses a quantile delta mapping approach to 
 # -----------------------------------------------------------------------------
 04_bias_correct_gcms.py --verbose
 
@@ -177,8 +185,8 @@ ogr2ogr -f "ESRI Shapefile" \
 #   07_generate_cffdrs_dataframes.py
 #      Get spatial averages for each ecoregion
 # -----------------------------------------------------------------------------
-05_calculate_cffdrs.py
-06_calculate_cffdrs_summaries.py
+05_calculate_cffdrs.py --verbose
+06_calculate_cffdrs_summaries.py --verbose
 07_generate_cffdrs_dataframes.py
 
 # -----------------------------------------------------------------------------

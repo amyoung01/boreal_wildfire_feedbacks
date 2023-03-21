@@ -12,6 +12,8 @@ VAR=('2m_temperature' \
      '10m_v_component_of_wind' \
      'total_precipitation')
 
+mkdir -p $WDIR/data/raw/climate/era5
+
 for i in ${YR[@]}; do
 
   for j in ${VAR[@]}; do

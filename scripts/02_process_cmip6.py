@@ -33,9 +33,6 @@ if sys.argv[-1] == '--verbose':
 #%% Convert yr limits to range
 cmip6_yr = range(cmip6_yr[0],cmip6_yr[1]+1)
 
-#%% ERA5 file to extract lat/lon coords and use for regridding
-coords = processed_data_dir / 'climate/era5/tasmax_era5_1979.nc'
-
 #%% Number of items in progress bar
 N = len(gcm_list)*len(metvars)
 
@@ -61,7 +58,7 @@ with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
                 src = list(wdir.glob('%s*nc' % var))
 
             ds = process_cmip6(src)
-            ds = ds.compute()
+            # ds = ds.compute()
 
             for yr in cmip6_yr:
 

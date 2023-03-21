@@ -26,7 +26,7 @@ with open(config_fn,'r') as config_file:
     hst_yr = config_params['TIME']['era5_yr']
     crs = CRS.from_wkt(config_params['CRS'])
 
-ecos_fn = root_dir / '../data/ancillary/ecos.shp'
+ecos_fn = processed_data_dir / 'ecoregions/ecos.shp'
 ecos = gpd.read_file(ecos_fn)
 eco_id = ecos['ECO_ID']
 

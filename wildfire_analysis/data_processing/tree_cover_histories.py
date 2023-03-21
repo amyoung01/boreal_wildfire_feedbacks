@@ -1,3 +1,16 @@
+"""
+Description
+-----------
+This script will go through each individual fire perimeter (> 200 ha) from the 
+Alaskan Large Fire Database and Canadian National Fire Database from 1950-2015
+and get an estimate of the mean tree cover for the years 2001-2020. This 
+function only looks at the treecover data for the regions of the fire perimeter
+that have no record of subsequent burning after the fire event. It clips out
+areas that did have reburns. The final product is a CSV table that provides
+an estimate of treecover as a function of time since fire for all fire 
+patches that had no reburning.
+"""
+
 # Import required libraries
 import yaml
 from pathlib import Path
@@ -12,7 +25,8 @@ from tqdm import tqdm
 
 from wildfire_analysis.utils import helpers as h
 
-# Suppress warnings
+# Suppress warnings. Upon inspection none of these warnings indicated our 
+# results were NOT being processed correctly.
 import warnings
 warnings.filterwarnings('ignore',
                         message='invalid value encountered in difference')

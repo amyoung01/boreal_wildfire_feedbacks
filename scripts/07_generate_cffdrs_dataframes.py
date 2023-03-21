@@ -25,7 +25,7 @@ with open(config_fn,'r') as config_file:
     hst_yr = config_params['TIME']['hst_yr']
     sim_periods = config_params['TIME']['sim_periods']
 
-ecos_fn = root_dir / '../data/ancillary/ecos.shp'
+ecos_fn = processed_data_dir / 'ecoregions/ecos.shp'
 ecos = gpd.read_file(ecos_fn)
 eco_id = ecos['ECO_ID']
 

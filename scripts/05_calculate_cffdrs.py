@@ -77,6 +77,9 @@ with tqdm(total=len(era5_yr),disable=not verbose) as pbar: # for progress bar
 
         cffdrs_ds = xr.Dataset(
             data_vars={
+                'ffmc': (['time','lat','lon'],cffdrs_vals['ffmc']),
+                'dmc': (['time','lat','lon'],cffdrs_vals['dmc']),
+                'dc': (['time','lat','lon'],cffdrs_vals['dc']),            
                 'isi': (['time','lat','lon'],cffdrs_vals['isi']),
                 'bui': (['time','lat','lon'],cffdrs_vals['bui']),
                 'fwi': (['time','lat','lon'],cffdrs_vals['fwi']),
@@ -127,6 +130,9 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
 
             cffdrs_ds = xr.Dataset(
                 data_vars={
+                    'ffmc': (['time','lat','lon'],cffdrs_vals['ffmc']),
+                    'dmc': (['time','lat','lon'],cffdrs_vals['dmc']),
+                    'dc': (['time','lat','lon'],cffdrs_vals['dc']),
                     'isi': (['time','lat','lon'],cffdrs_vals['isi']),
                     'bui': (['time','lat','lon'],cffdrs_vals['bui']),
                     'fwi': (['time','lat','lon'],cffdrs_vals['fwi']),
@@ -141,8 +147,10 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
                     })
             
             cffdrs_ds = cffdrs_ds.astype('float32')
-            export_fn = processed_data_dir \
-                / ('cffdrs/cmip6/%s/cffdrs_%s_%d.nc' % (gcm,gcm,yr))
+            export_fn = Path.joinpath(
+                processed_data_dir,
+                'cffdrs/cmip6/%s/cffdrs_%s_%d.nc' % (gcm,gcm,yr)
+                )
             cffdrs_ds.to_netcdf(export_fn,engine='h5netcdf')
 
             pbar.update()

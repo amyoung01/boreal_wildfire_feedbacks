@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 This module provides a set of functions to:
     -Read in raw ERA5 datasets 
@@ -8,7 +6,7 @@ This module provides a set of functions to:
     -Export processed ERA5 data needed for analysis.
 """
 
-#%% Import required libraries
+# Import required libraries
 from pathlib import Path
 
 import dask
@@ -20,7 +18,7 @@ import yaml
 from wildfire_analysis.utils import helpers as h
 
 # Get global values from configuration file
-config_fn = Path(__file__).parent / '../config.yaml'
+config_fn = Path(h.get_root_dir()) / 'config.yaml'
 
 with open(config_fn,'r') as config_file:
 
@@ -32,7 +30,7 @@ with open(config_fn,'r') as config_file:
 dask.config.set({"array.slicing.split_large_chunks": False})
 
 # Function to calculate daily maximum temperature from hourly data
-def _calc_tasmax(da,dask_compute=False):
+def _calc_tasmax(da: xr.DataArray,dask_compute=False) -> xr.DataArray:
 
     da = xc.units.convert_units_to(da,'degC') # [degC]
 
@@ -40,7 +38,7 @@ def _calc_tasmax(da,dask_compute=False):
 
     tasmax = tasmax.rename('tasmax')
 
-    tasmax.attrs['long_name'] = 'Maximum 2 metre temperature'
+    tasmax.attrs['long_name'] = 'Daily maximum 2 metre temperature'
 
     if dask.is_dask_collection(tasmax) & dask_compute:
         tasmax = tasmax.compute()
@@ -48,7 +46,7 @@ def _calc_tasmax(da,dask_compute=False):
     return tasmax
 
 # Function to daily total precip from hourly data
-def _calc_pr(da,dask_compute=False):
+def _calc_pr(da: xr.DataArray,dask_compute=False) -> xr.DataArray:
 
     da = xc.units.convert_units_to(da,'mm') # [mm]
 
@@ -64,7 +62,7 @@ def _calc_pr(da,dask_compute=False):
 
 # Function to calculate daily mean horizontal near-surface wind speed from 
 # hourly data. Thhis uses u10 and v10 vectors to calculate mean wind speed
-def _calc_sfcWind(ds,dask_compute=False):
+def _calc_sfcWind(ds: xr.Dataset,dask_compute=False) -> xr.DataArray:
 
     u10 = ds['u10']
     v10 = ds['v10']
@@ -86,7 +84,7 @@ def _calc_sfcWind(ds,dask_compute=False):
 
 # Function to calculate vapor pressure from temperature. Used to calculate 
 # relative humidity.
-def _vapor_pressure(T):
+def _vapor_pressure(T: xr.DataArray) -> xr.DataArray:
 
     if xc.units.str2pint(T.units).units == 'kelvin':
         T = xc.units.convert_units_to(T,'degC')
@@ -95,13 +93,13 @@ def _vapor_pressure(T):
     vp = vp * 0.001 # [kPa]
 
     vp.name = 'esat'
-    vp.attrs = {'units':'kPa','long_name':'Vapor pressure at saturation'}
+    vp.attrs = {'units':'kPa','long_name':'Vapor pressure'}
 
     return vp
 
 # Calculate near-surface daily minimum relative humidity from hourly air and 
-# dewpoint temperature. Clip values from 0-100%.
-def _calc_hursmin(ds,dask_compute=False):
+# dewpoint temperature. Clip values to 0-100%.
+def _calc_hursmin(ds: xr.Dataset,dask_compute=False) -> xr.DataArray:
 
     tas = ds['t2m']
     tdps = ds['d2m']
@@ -121,7 +119,7 @@ def _calc_hursmin(ds,dask_compute=False):
     return hursmin
 
 # Organize ERA5 dataset
-def _organize_era5(ds):
+def _organize_era5(ds: xr.Dataset) -> xr.Dataset:
 
     global_attrs = {'source_id': 'ERA5',
         'url': 'https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5',
@@ -148,7 +146,7 @@ def _organize_era5(ds):
         'standard_name': 'latitude',
         'axis': 'Y'
         })
-    ds['time'].attrs.updaet({
+    ds['time'].attrs.update({
         'standard_name': 'time',
         'axis': 'T'
         })
@@ -157,7 +155,7 @@ def _organize_era5(ds):
 
     return ds
 
-def process_era5(src,dask_load=False):
+def process_era5(src: str,dask_load=False) -> xr.Dataset:
 
     # Use parallel=True, too large to load everything into memory at once
     ds = xr.open_mfdataset(
@@ -168,7 +166,7 @@ def process_era5(src,dask_load=False):
         )
     
     # Get variable names for given dataset
-    varnames = h.get_var_names(ds) #list(ds.keys())
+    varnames = h.get_var_names(ds)
 
     # Identify which variable is in current dataset
     tasmax_bool = False
@@ -216,10 +214,6 @@ def process_era5(src,dask_load=False):
 
     return daily_ds
 
-def main():
-
-    return
-
 if __name__ == '__main__':
 
-    main()
+    None

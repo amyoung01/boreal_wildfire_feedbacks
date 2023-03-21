@@ -1,6 +1,5 @@
 **/.DS_Store
 
-data/ancillary/*
 data/dataframes/*
 data/raw/*
 data/processed/*

@@ -1,11 +1,15 @@
 """
-Set of helper functions for various tasks in boreal_fire_feedbacks
-project.
+Description
+-----------
+This is set of utility and helper functions to accompany this analysis. Most of
+these functions are shortcuts to extracting and processing relevant data from 
+xarray objects.
 """
 
 import datetime as dt
 import os
 import pathlib
+from typing import Iterable
 # from keyword import kwlist 
 
 import geopandas as gpd
@@ -17,35 +21,77 @@ import xarray as xr
 def get_root_dir() -> str:
 
     """
-    When run it will return the absolute path of the project directory.
-    """
+    Description
+    -----------
+    Get root directory of package module for current project.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    str
+        A string specifying the full path of the root directory.
+    """      
 
     return str((pathlib.Path(__file__).parent / '../').resolve())
 
-def get_kwargs(x,kwargs) -> dict:
+def get_kwargs(x: dict,kwargs: Iterable) -> dict:
 
     """
     Description
     -----------
-    User provides a list of kwargs and this function returns a dictionary which 
-    lists the kwargs that are available for a specific function.
+    Allows user to pass a dictionary of kwargs for multiple functions. This 
+    Function searches the kwarg dict and finds those only needed for a specific
+    function.
+
+    Parameters
+    ----------
+    x: dict
+        A dictionary of kwargs for multiple functions
+    kwargs: Iterable
+        Sequence of kwargs needed for specific function.
+
+    Returns
+    -------
+    dict
+        Dictionary of kwargs for specific function to be passed.
     """
     
     return {k:kwargs[k] for k in x if k in kwargs}
 
-def get_var_names(ds):
+def get_var_names(ds: xr.Dataset) -> list:
 
     """
-    Returns list of data variables available in a given xarray dataset
+    Description
+    -----------
+    Get variable names from xarray dataset.
     """
 
     # Return list of all variable names in netcdf dataset
     return list(ds.keys())
 
-def trim_geolims(ds,geolims):
+def trim_geolims(ds: xr.Dataset,geolims: Iterable) -> xr.Dataset:
 
     """
-    Alter geographic extent of a xarray dataset
+    Description
+    -----------    
+    Clip geographic extent of xarray dataset. Assumes X and Y axes are 'lat' 
+    and 'lon'.
+
+    Parameters
+    ----------
+    ds: xarray.Dataset
+        Dataset to clip
+    geolims: Iterable
+        Iterable to coordinates to define new extent of geographic limits: \
+        (left, bottom, right, top)
+
+    Returns
+    -------
+    ds: xarray.Dataset
+        Dataset with new geographic extent
     """
 
     coord_names = get_coord_names(ds)
@@ -65,6 +111,8 @@ def trim_geolims(ds,geolims):
 def get_coord_names(ds) -> dict:
 
     """
+    Description
+    -----------
     Returns dictionary of coordinate names from an xarray datast. Assumes
     it is geographically projected and that there are three dimensions 
     (time, lat, lon).
@@ -88,6 +136,8 @@ def get_coord_names(ds) -> dict:
 def get_axes_names(ds) -> dict:
 
     """
+    Description
+    -----------    
     Get coordinate variable names for each specific dimension (X, Y, and T) in
     an xarray dataset.
     """
@@ -104,7 +154,29 @@ def get_axes_names(ds) -> dict:
 
     return axes_dict
 
-def extract_str_parts(filelist,extension='',sep='_'):
+def extract_str_parts(filelist: list,
+                      extension: str='',
+                      sep: str='_') -> np.ndarray:
+
+    """
+    Description
+    -----------    
+    Parse filenmaes by separation string to return individual filename parts.
+
+    Parameters
+    ----------
+    filelist: list
+        List of filnames to separate
+    extension: str
+        Extension of file to remove (if desired)
+    sep: str
+        Character to separate and split filenames
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of filename parts
+    """    
 
     n_files = len(filelist)
     n_filename_parts = len(os.path.split(filelist[0])[1].split(sep))
@@ -120,8 +192,13 @@ def extract_str_parts(filelist,extension='',sep='_'):
     
     return filename_parts
 
-def get_geoaxes(ds,coord_axes=None):
+def get_geoaxes(ds: xr.Dataset,coord_axes=None) -> dict:
 
+    """
+    Description
+    -----------    
+    Get geographic axes names for X and Y dimensions/coordinates.
+    """
     if coord_axes is None:
 
         try:
@@ -133,24 +210,32 @@ def get_geoaxes(ds,coord_axes=None):
 
     return axes
 
-def get_geocoords(coords,**kwargs):
+def get_geocoords(coords,**kwargs) -> tuple:
 
-    """    
-    coords: 
-        Can be in one of the following formats:
-            1. a string to a file location that has the spatial coordinates 
-            needed for interpolation
-            2. An xarray dataset or dataarray with assigned coordinates
-            3. It can be a tuple of length 2, with each tuple element 
-            comprising either a list of x,y values or a numpy array of x,y 
-            values. Tuple order must be x,y.
+    """
+    Description
+    -----------
+    Get geographic coordinates (x,y) values from xarray dataset
 
-    coord_axes: 
+    Parameters
+    ----------  
+    coords: str, pathlib.Path, xarray.Dataset, xarray.DataArray, tuple
+            (str or pathlib.Path) file location that has the spatial 
+            coordinates needed for interpolation, (xarray.Dataset or
+            xarray.DataArray) with desired coordinates, (tuple) tuple of length 
+            2, with each tuple element comprising either a list of x,y values 
+            or a numpy.ndarray of x,y values. Tuple order must be x,y.
+    coord_axes: dict
         If supplied, must be a dict mapping the coordinate names to the
         'X' and 'Y' axes. If not suppled, cf_xarray axes is used to determine 
         the mapping between axes and coordinates.
 
-        e.g., coord_axes = {'X': 'lon','Y': 'lat'}   
+        e.g., coord_axes = {'X': 'lon','Y': 'lat'}
+    
+    Returns
+    -------
+    tuple
+        x,y coordinates of dataset
     """ 
 
     if not isinstance(coords,tuple):
@@ -177,10 +262,22 @@ def get_geocoords(coords,**kwargs):
 def coords_to_mesh(coords,flatten=False,**kwargs):
 
     """
+    Description
+    -----------
     Returns numpy meshgrid for a given set of coordinate values in 2 dimensions
 
+    Parameters
+    ----------
+    coords
+        x,y coordinates or xarray.Dataset that contains desired geographic
+        coordinates
     flatten: bool
-        False will return 2d array and True will return 1D array    
+        False will return 2d array and True will return 1D array
+
+    Returns
+    -------
+    tuple of numpy.ndarrays
+        (X,Y) with X and Y as numpy.ndarrays
     """
 
     x,y = get_geocoords(coords,**kwargs)
@@ -193,10 +290,13 @@ def coords_to_mesh(coords,flatten=False,**kwargs):
 
     return (X,Y)    
 
-def regrid_geodata(ds,target_coords,method='linear',**kwargs):
+def regrid_geodata(ds: xr.Dataset,
+                   target_coords,
+                   method='linear',
+                   **kwargs) -> xr.Dataset:
 
     """
-    Shortcut to using xarrays buil in interpolation function.
+    Shortcut to using xarrays built in interpolation function.
     """
 
     # Get axes for current xarray dataset. Will return empty dict if not 
@@ -215,10 +315,22 @@ def regrid_geodata(ds,target_coords,method='linear',**kwargs):
 
     return ds_interp
 
-def raster_transform_to_coords(rst_file):
+def raster_transform_to_coords(rst_file) -> tuple:
 
     """
+    Description
+    -----------
     Use rasterio library to get x and y coordinate values for a raster dataset
+
+    Parameters
+    ----------
+    rst_file: str or pathlib.Path
+        File location of raster dataset
+
+    Returns
+    -------
+    tuple
+        Tuple of geographic coordinates for raster dataset
     """
 
     with rio.open(rst_file) as ds:
@@ -243,7 +355,26 @@ def raster_transform_to_coords(rst_file):
 
     return coords
 
-def mask_from_shp(shpfile,grd_coords,**kwargs):
+def mask_from_shp(shpfile: gpd.GeoDataFrame,grd_coords,**kwargs) -> np.ndarray:
+
+    """
+    Description
+    -----------
+    Use rasterio library to get x and y coordinate values for a raster dataset
+
+    Parameters
+    ----------
+    shpfile: str, pathlib.Path, geopandas.GeoDataFrame
+        File location of ESRI Shapefile or geopandas.GeoDataFrame
+    grd_coords: 
+        File, xarray.Dataset, or tuple(x,y) containing coordinates to mask with
+        shpfile
+
+    Returns
+    -------
+    numpy.ndarray
+        numpy array of dtype=bool of spatial mask defined by shpfile
+    """    
 
     # Get gridded geospatial mask for a region covered by an ESRI shapefile
 

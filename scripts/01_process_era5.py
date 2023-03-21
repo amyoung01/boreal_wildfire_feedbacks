@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-'''
-ADD DOCSTRING
-'''
-
 #%% Import libraries
 from pathlib import Path
 import sys
@@ -32,8 +28,11 @@ if (sys.argv[-1] == "--verbose"):
     verbose = True
 
 #%% Set directories for reading and writing
-wdir = raw_data_dir / 'climate/era5/netcdf4'
+wdir = raw_data_dir / 'climate/era5'
 dest = processed_data_dir / 'climate/era5'
+
+if not dest.exists():
+    Path.mkdir(dest,parents=True)
 
 #%% Set range of years for processing
 yr_range = range(era5_yr[0],era5_yr[1]+1)

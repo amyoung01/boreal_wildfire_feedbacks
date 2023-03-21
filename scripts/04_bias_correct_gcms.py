@@ -36,14 +36,16 @@ verbose = False
 if sys.argv[-1] == '--verbose':
     verbose = True
 
-shpfile = ancillary_data_dir / 'ecos.shp'
-
+#%% Finish initializing workspace to bias correct GCMs 
+# Set location for shapefiles and ERA5 reference data
+shpfile = processed_data_dir / 'ecoregions/ecos.shp'
 refdir = processed_data_dir / 'climate/era5'
 
+# Set list of quantile values as numpy array
 quantile_vals = np.array(quantile_vals)
 
+# Needed for progress bar
 N = len(gcm_list)*len(metvars)*len(sim_periods)
-
 with tqdm(total=N,disable=not verbose) as pbar: # for progress bar
 
     for gcm in gcm_list:
