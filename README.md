@@ -1,7 +1,8 @@
 # boreal_wildfire_feedbacks  
 
-### Author: Adam M. Young  
-### email: adam.m.young@outlook.com
+#### Author: Adam M. Young  
+#### email: adam.m.young@outlook.com  
+#### date created: 2023-03-12
 ---
 This repository contains the code and scripts needed to recreate analysis
 designed to model historical area burned in boreal forest ecosystems in North
