@@ -1,9 +1,12 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxx) 
+
+[![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-green.svg)](https://creativecommons.org/publicdomain/zero/1.0/)  
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7761882.svg)](https://doi.org/10.5281/zenodo.7761882) 
 
 # boreal_wildfire_feedbacks  
 
 #### Author: Adam M. Young  
-#### email: adam.m.young@outlook.com
+#### email: adam.m.young@outlook.com  
+#### date created: 2023-03-12
 ---
 This repository contains the code and scripts needed to recreate analysis
 designed to model historical area burned in boreal forest ecosystems in North
