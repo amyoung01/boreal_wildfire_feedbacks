@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
-# Import required libraries
+#%% Import libraries
 import yaml
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
 
+#%% Import config file and read in parameters needed for data processing
+# Get global values from configuration file
 # Read in configuration list from 
 config_fn = Path('../wildfire_analysis/config.yaml')
 
@@ -15,26 +17,34 @@ with open(config_fn, 'r') as config_fn:
 
     gcm_list = config_params['CLIMATE']['gcm_list']
 
+#%% Set directory names
 dataframe_dir = Path('../data/dataframes')
 projaab_dir = Path('../data/model_results/projected_area_burned')
 
+#%% Read in historical observed AAB
 hist_aab = pd.read_csv(dataframe_dir / 'annual_area_burned.csv')
 hist_aab = hist_aab.loc[hist_aab['year'] >= 1980]
 hist_aab = hist_aab.reset_index(drop=True)
 
-ecos = hist_aab['ecos'].unique()
-yr = np.arange(1980, 2099+1)
-feedback_type = ['feedback', 'no-feedback']
-quantvals = [0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95]
+#%% Read in data on ecoregion size
+ecos_size = pd.read_dcsv(Path('../data/ancillary/ecoregion_size.csv'))
 
-N = yr.size * ecos.size
+#%% Finish initializing workspace
+ecos = hist_aab['ecos'].unique() # Unique ecoregions
+yr = np.arange(1980, 2099+1) # Years to process
+feedback_type = ['feedback', 'no-feedback'] # Feedback type
+# Percentiles to summarize
+quantvals = [0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95] 
 
-col_labels = ['year', 'ecos', 'gcm', 'obs_aab', 'feedback_type', 'mean', 'sd', 
-              'prctile05', 'prctile10', 'prctile25', 'prctile50', 'prctile75', 
-              'prctile90', 'prctile95']
+# Column labels for dataframe to export
+col_labels = ['year', 'ecos', 'ecos_size', 'gcm', 'obs_aab', 'feedback_type', 
+              'mean', 'sd', 'prctile05', 'prctile10', 'prctile25', 'prctile50',
+              'prctile75', 'prctile90', 'prctile95']
 
+# Create empty dataframe
 export_df = pd.DataFrame(data=None, columns=col_labels)
 
+# Total number of summaries to produce
 n = yr.size * len(gcm_list) * len(feedback_type)
 
 for ecos_id in ecos:
@@ -44,6 +54,8 @@ for ecos_id in ecos:
     
     export_df_i['year'] = np.tile(yr, len(feedback_type) * len(gcm_list))
     export_df_i['ecos'] = ecos_id
+    export_df_i['ecos_size'] = \
+        ecos_size.loc[ecos_size['ecos'] == ecos_id, 'area_km2']
     export_df_i['gcm'] = np.repeat(gcm_list, len(feedback_type) * yr.size)
     export_df_i['feedback_type'] = \
         np.tile(np.repeat(feedback_type, yr.size), len(gcm_list))
@@ -88,13 +100,16 @@ for ecos_id in ecos:
                                    axis=0, 
                                    ignore_index=True)
 
+# Rounfd all area burned results to one decimal place
 export_df = export_df.round(1)
 
+# Add header with metadata to csv file that is exported
 fn = Path('../data/dataframes/aab_timeseries_summaries.csv')
 commented_lines = ['# aab_timeseries_summaries.csv\n', 
                    '# Units of annual area burned are in km^2\n',
                    '# -9999 = NoData\n'
                    '# Summaries provided are:\n',
+                   '# \t ecos_size: area of entire ecoregion in km^2\n'
                    '# \t obs_aab: historical observed annual area burned\n'
                    '# \t mean: average of all simulations\n',
                    '# \t sd: standard deviation of simulations\n',

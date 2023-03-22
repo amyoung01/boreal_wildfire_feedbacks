@@ -1,9 +1,11 @@
 #!/usr/bin/env Rscript
 
-# Initialize workspace ---------------------------------------------------------
+# Initialize workspace --------------------------------------------------------
 set.seed(314159)
 
-# TODO: how to read in config.yaml file into R
+# -----------------------------------------------------------------------------
+# TODO: how to read in config.yaml file into R --------------------------------
+# -----------------------------------------------------------------------------
 src <- c("era5", "EC-Earth3-Veg", "MPI-ESM1-2-HR", "MRI-ESM2-0", "CNRM-CM6-1-HR")
 
 # Read in list of model files --------------------------------------------------
@@ -85,7 +87,7 @@ for (mdl in src) {
 
         prior_aab <- cbind(matrix(rep(aab_init, n_aab_init), ncol = n_aab_init),
                            matrix(rep(aab, N), nrow = N, byrow = TRUE))
-        prior_aab <- prior_aab[, seq_along(w)]d
+        prior_aab <- prior_aab[, seq_along(w)]
 
         for (yr in pred_yrs) {
 

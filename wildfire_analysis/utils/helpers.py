@@ -206,7 +206,7 @@ def get_geoaxes(ds: xr.Dataset,coord_axes=None) -> dict:
             axes['X']
             axes['Y']
         except:
-            axes = {'X': ['lon'],'Y': ['lat']}
+            axes = {'X': 'lon','Y': 'lat'}
 
     return axes
 
@@ -250,8 +250,8 @@ def get_geocoords(coords,**kwargs) -> tuple:
 
         axes = get_geoaxes(ds_for_coords,**kwargs)
 
-        x = ds_for_coords[axes['X'][0]].values
-        y = ds_for_coords[axes['Y'][0]].values
+        x = ds_for_coords[axes['X']].values
+        y = ds_for_coords[axes['Y']].values
 
     else:
 

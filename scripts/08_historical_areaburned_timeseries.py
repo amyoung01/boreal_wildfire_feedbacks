@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+#%% Import libraries
 from itertools import product
 from pathlib import Path
 
@@ -13,7 +16,7 @@ from wildfire_analysis.utils import helpers as h
 
 root_dir = Path(h.get_root_dir())
 
-# Import config file and read in parameters needed for data processing
+#%% Import config file and read in parameters needed for data processing
 # Get global values from configuration file
 config_fn = root_dir / 'config.yaml'
 
@@ -26,10 +29,13 @@ with open(config_fn,'r') as config_file:
     hst_yr = config_params['TIME']['era5_yr']
     crs = CRS.from_wkt(config_params['CRS'])
 
+#%% Import ecoregion shapefile
 ecos_fn = processed_data_dir / 'ecoregions/ecos.shp'
 ecos = gpd.read_file(ecos_fn)
 eco_id = ecos['ECO_ID']
 
+#%% Set directory of location for fire geotiff files that provide pres/abs for 
+# fire at 1-km resolution for each year
 fire_rst_dir = processed_data_dir / 'fire/rasters'
 fire_yr = range(fire_yr[0],fire_yr[1]+1)
 
@@ -58,6 +64,7 @@ for yr in fire_yr:
 # Get x and y coordinate values for fire dataset
 coords = h.raster_transform_to_coords(fn)
 
+#%% Summarize annual area burned for each ecoregion for each year
 for id in eco_id:
 
     ecos_i = ecos.loc[ecos['ECO_ID']==id,:]

@@ -73,8 +73,10 @@ with tqdm(total=len(era5_yr),disable=not verbose) as pbar: # for progress bar
         hurs = metvars['hursmin'].values
         mon = metvars['time'].dt.month.values
 
+        # Calculate CFFDRS indices
         cffdrs_vals = cffdrs.cffdrs_calc(tas,pr,sfcWind,hurs,mon)
 
+        # Put CFFDRS results in xarray dataset
         cffdrs_ds = xr.Dataset(
             data_vars={
                 'ffmc': (['time','lat','lon'],cffdrs_vals['ffmc']),
@@ -93,11 +95,12 @@ with tqdm(total=len(era5_yr),disable=not verbose) as pbar: # for progress bar
                         metvars['lon'].attrs),
                 })
         
+        # Export/write CFFDRS results to netcdf file
         cffdrs_ds = cffdrs_ds.astype('float32')
         export_fn = era5_cffdrs_dir / ('cffdrs_era5_%d.nc' % yr)
         cffdrs_ds.to_netcdf(export_fn,engine='h5netcdf')
 
-        pbar.update()
+        pbar.update() # Update progress bar
 
 #%% Process and calculate cffdrs for cmip6 data
 if verbose:
@@ -120,14 +123,17 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
             # Transpose axes of data arrays to make sure they're in right order
             metvars = metvars.transpose('time','lat','lon')
 
-            tas = metvars['tasmax'].values
-            pr = metvars['pr'].values
-            sfcWind = metvars['sfcWind'].values
-            hurs = metvars['hursmin'].values
-            mon = metvars['time'].dt.month.values
+            # Get metvars as numpy arrays
+            tas = metvars['tasmax'].values # Temperature
+            pr = metvars['pr'].values # Precip
+            sfcWind = metvars['sfcWind'].values # Wind speed
+            hurs = metvars['hursmin'].values # Relative humidity
+            mon = metvars['time'].dt.month.values # Months
 
+            # Calculate CFFDRS indices
             cffdrs_vals = cffdrs.cffdrs_calc(tas,pr,sfcWind,hurs,mon)
 
+            # Put CFFDRS results in xarray dataset
             cffdrs_ds = xr.Dataset(
                 data_vars={
                     'ffmc': (['time','lat','lon'],cffdrs_vals['ffmc']),
@@ -146,6 +152,7 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
                             metvars['lon'].attrs),
                     })
             
+            # Export/write CFFDRS results to netcdf file
             cffdrs_ds = cffdrs_ds.astype('float32')
             export_fn = Path.joinpath(
                 processed_data_dir,
@@ -153,7 +160,7 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
                 )
             cffdrs_ds.to_netcdf(export_fn,engine='h5netcdf')
 
-            pbar.update()
+            pbar.update() # Update progress bar
 
 if verbose:
     print('\n\nFinished calculating CFFDRS!\n\n')
