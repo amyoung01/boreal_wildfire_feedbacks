@@ -1,0 +1,47 @@
+[
+  {
+    "name": "boreal_wildfire_feedbacks",
+    "organization": "University of Alaska Fairbanks",
+    "description": "Modeling historical and projecting future area burned in boreal forests of North America",
+    "version": "1.0",
+    "status": "Initial Full Release",
+
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Public Domain, CC0-1.0",
+          "URL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/blob/main/LICENSE"
+        }
+      ]
+    },
+
+    "homepageURL": "https://doi.org/10.5281/zenodo.7761882",
+    "downloadURL": "https://github.com/usgs/REPOSITORY_NAME/archive/master.zip",
+    "disclaimerURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/blob/main/LICENSE",
+    "repositoryURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip",
+    "vcs": "git",
+
+    "laborHours": 2357,
+
+    "tags": [
+      "v0.1-beta",
+      "v1.0"
+    ],
+
+    "languages": [
+      "Python",
+      "Shell",
+      "R"
+    ],
+
+    "contact": {
+      "name": "Adam Young",
+      "email": "adam.m.young@outlook.com"
+    },
+
+    "date": {
+      "metadataLastUpdated": "2023-03-30"
+    }
+  }
+]
