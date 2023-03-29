@@ -120,7 +120,8 @@ with tqdm(total=len(cmip6_yr)*len(gcm_list),disable=not verbose) as pbar:
             filelist = list(cmip6_dir_i.glob('*%d*nc' % yr))
             metvars = xr.open_mfdataset(filelist,engine='h5netcdf')
 
-            # Transpose axes of data arrays to make sure they're in right order
+            # Transpose axes of data arrays to make sure they're in right 
+            # order. Time needs to be axis 0 for the CFFDRS calcs
             metvars = metvars.transpose('time','lat','lon')
 
             # Get metvars as numpy arrays

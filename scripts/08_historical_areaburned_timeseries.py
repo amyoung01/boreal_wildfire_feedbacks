@@ -91,5 +91,5 @@ for id in eco_id:
 
     del aab_df_i
 
-export_fn = dataframes_dir / 'annual_area_burned.csv'
+export_fn = dataframes_dir / 'observed_area_burned.csv'
 aab_df.to_csv(export_fn,index=False)

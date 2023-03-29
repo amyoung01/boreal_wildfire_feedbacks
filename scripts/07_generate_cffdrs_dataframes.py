@@ -1,4 +1,7 @@
-from itertools import product
+#!/usr/bin/env python3
+
+#%% Import libraries
+import itertools
 from pathlib import Path
 
 import geopandas as gpd
@@ -11,7 +14,7 @@ from wildfire_analysis.utils import helpers as h
 
 root_dir = Path(h.get_root_dir())
 
-# Import config file and read in parameters needed for data processing
+#%% Import config file and read in parameters needed for data processing
 # Get global values from configuration file
 config_fn = root_dir / 'config.yaml'
 
@@ -25,47 +28,78 @@ with open(config_fn,'r') as config_file:
     hst_yr = config_params['TIME']['hst_yr']
     sim_periods = config_params['TIME']['sim_periods']
 
+#%% Import ecoregion shapefile
 ecos_fn = processed_data_dir / 'ecoregions/ecos.shp'
 ecos = gpd.read_file(ecos_fn)
-eco_id = ecos['ECO_ID']
+ecos_id = ecos['ECO_ID']
 
+#%% Set directory for CFFDRS statistical summaries
 cffdrs_stats_dir = processed_data_dir / 'cffdrs/cffdrs_stats'
 
+#%% Set list of sources to process, including all GCMs and ERA5
 src_to_process = ['era5'] + gcm_list
+
+#%% For each sources get spatial average of each statistical summary and export
+
+fw_df = pd.DataFrame()
 
 for src in src_to_process:
 
     fn = list(cffdrs_stats_dir.glob('*%s*' % src))[0]
     ds = xr.load_dataset(fn,engine='h5netcdf')
+    ds = ds.transpose('stat','year','lat','lon')
     arr_shape = ds['fwi'].shape
-
-    for id in eco_id:
+        
+    for id in ecos_id:
 
         mask = h.mask_from_shp(ecos.loc[ecos['ECO_ID']==id,:],ds)
         mask_Nd = np.broadcast_to(mask,arr_shape)
         ds_ecos_i = ds.where(mask_Nd)
 
-        fw_avgs_ds = ds_ecos_i.mean(dim=['lat','lon'])
-        fw_avgs_df_i = pd.DataFrame()
-        fw_avgs_df_i['year'] = fw_avgs_ds['year'].values
-        fw_avgs_df_i['ecos'] = id
-     
-        vars = h.get_var_names(fw_avgs_ds)
-        stats_ = list(fw_avgs_ds['stat'].values)
+        fw_avgs = ds_ecos_i.mean(dim=['lat','lon'])
 
-        for x, y in product(vars, stats_):
-            fw_avgs_df_i['_'.join([x,y])] = fw_avgs_ds[x].sel(stat=y).values
+        yr = ds['year'].values.tolist()
+        stats_ = ds['stat'].values.tolist()
+        vars = h.get_var_names(fw_avgs)
 
-        if 'fw_avgs_df' not in locals():            
-            fw_avgs_df = fw_avgs_df_i.copy()            
-        else:
-            fw_avgs_df = pd.concat([fw_avgs_df,fw_avgs_df_i])
+        data = {
+            'ecos': id,
+            'year': fw_avgs['year'].values,
+            'source': src,
+        }
 
-        del fw_avgs_ds, fw_avgs_df_i
+        for v1, v2 in itertools.product(vars,stats_):
 
-    yr = fw_avgs_df['year'].unique()
-        
-    df_fn = dataframes_dir / ('cffdrs-stats_%s_%d-%d.csv' % (src,yr[0],yr[-1]))
-    fw_avgs_df.to_csv(df_fn,index=False)
+            data.update(
+                {"_".join([v1,v2]): fw_avgs[v1].sel(stat=v2).values.tolist()}
+                )
 
-    del fw_avgs_df
+        fw_df = pd.concat((fw_df,pd.DataFrame(data)),axis=0)
+
+fw_df = fw_df.round(3)
+
+fn = dataframes_dir / 'cffdrs_annual_stats.csv'
+
+commented_lines = ['# cffdrs_annual_stats.csv\n',
+                   '# Annual summary statistics for ISI BUI and FWI for each ecoregion\n',
+                   '# Columns descriptions:\n',
+                   '# \t ecos: ecoregion\n',
+                   '# \t source: ERA5 or one of the GCMs\n',
+                   '# \t isi_max: Maximum initial spread index anomaly relative to 1980-2009 \n',
+                   '# \t isi_95d: Number of days that exceeds historical 95th percentile of initial spread index\n',
+                   '# \t isi_fs: Maximum 90-day moving window of initial spread index\n',
+                   '# \t isi_fwsl: Number of days that exceed the historial midpoint of the range historical initial spread index relative to 1980-2009\n',
+                   '# \t bui_max: Maximum build up index anomaly relative to 1980-2009\n',
+                   '# \t bui_95d: Number of days that exceeds historical 95th percentile of build up index\n',
+                   '# \t bui_fs: Maximum 90-day moving window of build up index\n',
+                   '# \t bui_fwsl: Number of days that exceed the historial midpoint of the range historical build up index relative to 1980-2009\n',
+                   '# \t fwi_max: Maximum fire weather index anomaly relative to 1980-2009\n',
+                   '# \t fwi_95d: Number of days that exceeds historical 95th percentile of fire weather index\n',
+                   '# \t fwi_fs: Maximum 90-day moving window of fire weather index\n',
+                   '# \t fwi_fwsl: Number of days that exceed the historial midpoint of the range historical fire weather index relative to 1980-2009\n',
+                   '#\n']
+
+with open(fn, 'w') as f:
+    f.write("".join(commented_lines))
+
+fw_df.to_csv(fn, mode='a', index=False)

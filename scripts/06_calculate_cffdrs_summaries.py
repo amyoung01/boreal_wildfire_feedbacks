@@ -49,6 +49,9 @@ if verbose:
 
 filelist = [list(era5_dir.glob("*%d*" % i))[0] for i in era5_yr]
 ds_cffdrs_stats = cffdrs_stats.calc_fireweather_stats(filelist)
+ds_cffdrs_stats = ds_cffdrs_stats[['isi','bui','fwi']]
+ds_cffdrs_stats = ds_cffdrs_stats.astype('float32')
+ds_cffdrs_stats = ds_cffdrs_stats.compute()
 
 era5_fn = dest / ('cffdrs-stats_era5_%d-%d.nc' % (era5_yr[0],era5_yr[-1]))
 ds_cffdrs_stats.to_netcdf(era5_fn,engine='h5netcdf')
@@ -70,6 +73,8 @@ for gcm in gcm_list:
     gcm_dir_i = cmip6_dir / ('%s' % gcm)
     filelist = [list(gcm_dir_i.glob("*%d*" % i))[0] for i in cmip6_yr]
     ds_cffdrs_stats = cffdrs_stats.calc_fireweather_stats(filelist)
+    ds_cffdrs_stats = ds_cffdrs_stats[['isi','bui','fwi']]
+    ds_cffdrs_stats = ds_cffdrs_stats.astype('float32')
 
     gcm_fn = dest / ('cffdrs-stats_%s_%d-%d.nc' % 
                      (gcm,cmip6_yr[0],cmip6_yr[-1]))
@@ -81,3 +86,5 @@ for gcm in gcm_list:
 if verbose:
     print('\n... finished processing CFFFDRS stats for CMIP6!')
     print('--------------------------------------------------------------')
+
+# %%
