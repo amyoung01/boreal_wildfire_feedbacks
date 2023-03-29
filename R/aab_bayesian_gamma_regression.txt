@@ -1,5 +1,5 @@
 # Response: Gamma
-# Parameters_to_save: beta0 beta1 beta2 shape aab_init M
+# Parameters_to_save: beta0 beta1 beta2 shape aab_init offset
 
 model {
 
@@ -13,7 +13,7 @@ model {
   # ----------------------------------------------------------------------------
   # Shape parameter prior
   # ----------------------------------------------------------------------------
-  shape ~ dexp(0.01)
+  shape ~ dexp(0.1)
 
   # ----------------------------------------------------------------------------
   # Initialize 60-yr fire history for first year in time series (1980)
@@ -28,9 +28,10 @@ model {
 
   R[1] <- sum(w * aab_hist)
   M[1] <- S - R[1]
+  offset[1] <- log(M[1])
 
   # Use log-link
-  log(mu[1]) <- beta0 + beta1 * BUI[1] + beta2 * ISI[1] + 1 * log(M[1])
+  log(mu[1]) <- beta0 + beta1 * BUI[1] + beta2 * ISI[1] + 1 * offset[1]
 
   rate[1] <- shape / mu[1]
 
@@ -43,10 +44,11 @@ model {
   for (i in 2:n) {
 
     R[i] <- sum(w * c(aab_hist[i:60], aab[1:(i-1)]))
-    M[i] <- ifelse(S > R[i], S - R[i], 1) # Offset
+    M[i] <- ifelse(S > R[i], S - R[i], 1)
+    offset[i] <- log(M[i])
 
     # Use natural logarithm to link linear predictor to Gamma distribution
-    log(mu[i]) <- beta0 + beta1 * BUI[i] + beta2 * ISI[i] + 1 * log(M[i])
+    log(mu[i]) <- beta0 + beta1 * BUI[i] + beta2 * ISI[i] + 1 * offset[i]
 
     # Estimate rate parameter from shape and mu
     rate[i] <- shape / mu[i]

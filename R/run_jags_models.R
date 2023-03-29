@@ -16,15 +16,17 @@ results_dir <- "./data/model_results"
 
 # Read in data files -----------------------------------------------------------
 aab            <- read.csv(file.path(dataframe_dir,
-                                     "annual_area_burned.csv"))
-era5           <- read.csv(file.path(dataframe_dir,
-                                     "cffdrs-stats_era5_1979-2020.csv"))
+                                     "observed_area_burned.csv"))
+cffdrs_vars    <- read.csv(file.path(dataframe_dir,
+                                     "cffdrs_annual_stats.csv"),skip = 18)
 treecov        <- read.csv(file.path(dataframe_dir,
-                                     "avg_postfire_forest_growth.csv"))
+                                     "postfire_successional_functions.csv"))
 ecos_size      <- read.csv(file.path(ancillary_dir,
                                      "ecoregion_size.csv"))
 predictor_vars <- read.csv(file.path(ancillary_dir,
                                      "regression_predictors.csv"))
+# Subset cffdrs_vars to just era5
+era5 <- cffdrs_vars[cffdrs_vars$source == "era5", ]
 
 # Merge climate dataframe and annual area burned data frame --------------------
 df <- data.table::merge.data.table(aab, era5, by = c("year", "ecos"))

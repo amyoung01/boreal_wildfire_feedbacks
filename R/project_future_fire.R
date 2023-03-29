@@ -3,19 +3,17 @@
 # Initialize workspace --------------------------------------------------------
 set.seed(314159)
 
-# -----------------------------------------------------------------------------
-# TODO: how to read in config.yaml file into R --------------------------------
-# -----------------------------------------------------------------------------
-src <- c("era5", "EC-Earth3-Veg", "MPI-ESM1-2-HR", "MRI-ESM2-0", "CNRM-CM6-1-HR")
-
 # Read in list of model files --------------------------------------------------
 files <- list.files(path = "data/model_results",
                     pattern = "\\.RData$")
 
-ecos_size <- "data/dataframes/ecoregion_size.csv"
+ecos_size <- "data/ancillary/ecoregion_size.csv"
 ecos_size <- read.csv(ecos_size)
 
-regression_forms <- read.csv("data/dataframes/regression_predictors.csv")
+regression_forms <- read.csv("data/ancillary/regression_predictors.csv")
+
+pred_vars_all <- read.csv("data/dataframes/cffdrs_annual_stats.csv", skip = 18)
+src <- unique(pred_vars_all$source)
 
 unique_ecos <- ecos_size$ecos
 
@@ -25,10 +23,7 @@ max_frac <- 6
 # Make projections of future area burned for each gcm --------------------------
 for (mdl in src) {
 
-    pred_vars_file <- list.files(path = "data/dataframes",
-                                 pattern = sprintf("cffdrs-stats_%s.*", mdl),
-                                 full.names = TRUE)
-    pred_vars <- read.csv(pred_vars_file)
+    pred_vars <- pred_vars_all[pred_vars_all$source == mdl, ]
     pred_yrs <- unique(pred_vars$year)
 
     for (f in seq_along(files)) {
@@ -69,8 +64,9 @@ for (mdl in src) {
         # Number of simulations
         N <- nrow(betas)
 
-        export_mtx <- matrix(NA, nrow = N, ncol = length(pred_yrs))
-        prior_aab <- matrix(NA, nrow = N, ncol = length(w))
+        aab_pred <- matrix(NA, nrow = N, ncol = length(pred_yrs))
+        L_frac <- matrix(NA, nrow = N, ncol = length(pred_yrs))
+        aab_prev <- matrix(NA, nrow = N, ncol = length(w))
 
         # Vector of shape parameter estimates (N x 1)
         shape <- as.numeric(sims$shape)
@@ -85,9 +81,12 @@ for (mdl in src) {
         nyr_after_start <- pred_yrs[1] - year[1]
         n_aab_init <- length(w) - nyr_after_start
 
-        prior_aab <- cbind(matrix(rep(aab_init, n_aab_init), ncol = n_aab_init),
-                           matrix(rep(aab, N), nrow = N, byrow = TRUE))
-        prior_aab <- prior_aab[, seq_along(w)]
+        aab_prev <- cbind(
+          matrix(rep(aab_init, n_aab_init), ncol = n_aab_init),
+          matrix(rep(aab, N), nrow = N, byrow = TRUE)
+          )
+
+        aab_prev <- aab_prev[, seq_along(w)]
 
         for (yr in pred_yrs) {
 
@@ -97,13 +96,14 @@ for (mdl in src) {
             # aab
             if (yr > pred_yrs[1]) {
 
-                prior_aab <- cbind(prior_aab[, -1], aab_i)
+                aab_prev <- cbind(aab_prev[, -1], aab_pred_i)
 
             }
 
             # Set offset terms for current year
-            M_i <- as.numeric(S - (prior_aab %*% as.matrix(w)))
-            M_i <- ifelse(M_i > 1, log(M_i), log(1))
+            R_i <- as.vector(aab_prev %*% as.matrix(w))
+            M_i <- ifelse(S > R_i, S - R_i, 1)
+            offset_i <- log(M_i)
 
             # Model matrix X (only one row for a given year)
             X <- cbind(1, data$bui[id], data$isi[id])
@@ -113,30 +113,38 @@ for (mdl in src) {
             #   betas is a N x 3 matrix of paremeter estimates
             #   M_i is a N x 1 is a vector of offset terms
             #   mu is a N x 1 vector of predictions of aab on a log scale
-            mu <- exp(X %*% t(betas) + M_i)
+            mu <- exp(X %*% t(betas) + offset_i)
+            mu <- as.vector(mu)
 
             # Get rate parameters needed for gamma distribution simulation
             rate <- shape / mu
 
             # simulate a random sample from gamma distribution
-            aab_i <- rgamma(N, shape = shape, rate = rate)
+            aab_pred_i <- rgamma(N, shape = shape, rate = rate)
 
             # Cap total amount of area burned that can occur in a given year
-            aab_i <- ifelse(aab_i > max_aab, max_aab, aab_i)
+            aab_pred_i <- ifelse(aab_pred_i > max_aab, max_aab, aab_pred_i)
 
-            export_mtx[, which(pred_yrs == yr)] <- aab_i
+            aab_pred[, pred_yrs == yr] <- aab_pred_i
+            L_frac[, pred_yrs == yr] <- M_i / S
 
         }
 
-        colnames(export_mtx) <- pred_yrs
+        colnames(aab_pred) <- pred_yrs
+        colnames(L_frac) <- pred_yrs
 
-        export_fn <- sprintf("future-projections_%s_%s_%s_%d.csv",
-            mdl, distr, sim, ecos)
+        export_aab_fn <- paste0(
+          "data/model_results/projected_area_burned/",
+          sprintf("future-fire-projections_%s_%s_%d.csv", mdl, sim, ecos)
+        )
 
-        write.csv(export_mtx,
-            file = sprintf("data/model_results/projected_area_burned/%s",
-                           export_fn),
-            row.names = FALSE)
+        export_Lfrac_fn <- paste0(
+          "data/model_results/projected_area_burned/",
+          sprintf("future-landscape-fractions_%s_%s_%d.csv", mdl, sim, ecos)
+        )
+
+        write.csv(aab_pred, export_aab_fn, row.names = FALSE)
+        write.csv(L_frac, export_Lfrac_fn, row.names = FALSE)
 
     }
 
