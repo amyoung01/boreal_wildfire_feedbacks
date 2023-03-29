@@ -16,10 +16,10 @@
       ]
     },
 
-    "homepageURL": "https://doi.org/10.5281/zenodo.7761882",
-    "downloadURL": "https://github.com/usgs/REPOSITORY_NAME/archive/master.zip",
+    "homepageURL": "https://doi.org/10.5281/zenodo.7761883",
+    "downloadURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip",
     "disclaimerURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/blob/main/LICENSE",
-    "repositoryURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks/archive/refs/heads/main.zip",
+    "repositoryURL": "https://github.com/amyoun01/boreal_wildfire_feedbacks.git",
     "vcs": "git",
 
     "laborHours": 2357,
@@ -41,7 +41,7 @@
     },
 
     "date": {
-      "metadataLastUpdated": "2023-03-30"
+      "metadataLastUpdated": "2023-03-29"
     }
   }
 ]
