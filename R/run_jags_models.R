@@ -10,9 +10,9 @@ args <- commandArgs(trailingOnly = TRUE)
 jags_models <- args[seq_along(args)]
 
 # Set working directories ------------------------------------------------------
-ancillary_dir <- "./data/ancillary"
-dataframe_dir <- "./data/dataframes"
-results_dir <- "./data/model_results"
+ancillary_dir <- "data/ancillary"
+dataframe_dir <- "data/dataframes"
+results_dir <- "data/model_results"
 
 # Read in data files -----------------------------------------------------------
 aab            <- read.csv(file.path(dataframe_dir,
@@ -86,7 +86,7 @@ for (i in seq_along(unique_ecos)) {
     n = nrow(df_i),
     aab_meanlog = aab_ref_mle$estimate["meanlog"],
     aab_selog = aab_ref_mle$sd["meanlog"]
-    )
+  )
 
   # For each model (here using a Gamma distributions)
   for (j in seq_along(jags_models)) {
@@ -99,13 +99,9 @@ for (i in seq_along(unique_ecos)) {
     for (feedback in feedback_type) {
 
       if (feedback == "feedback") {
-
         data_list$w <- w
-
       } else if (feedback == "no-feedback") {
-
         data_list$w <- w_null
-
       }
 
       # Use R2jags package to run Bayesian models

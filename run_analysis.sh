@@ -139,7 +139,6 @@ reproject_mod44b.sh
 # scripts in the repository, but we do provide an empty text file named for 
 # each netcdf downloaded in bash/z_wget_scripts/. The actual scripts are 
 # available upon request from the author.
-
 download_cmip6.sh
 
 # Download ERA5 datasets using a set of python scripts wrapped in shell script.
@@ -190,24 +189,25 @@ ogr2ogr -f "ESRI Shapefile" \
 07_generate_cffdrs_dataframes.py
 
 # -----------------------------------------------------------------------------
-# TBD -------------------------------------------------------------------------
+# Creatae a data frame summarizing observed annual area burned for each 
+# ecoregion from 1950-2020.
 # -----------------------------------------------------------------------------
 08_generate_areaburned_dataframes.py
 
 # -----------------------------------------------------------------------------
-# TBD -------------------------------------------------------------------------
+# Summarize tree cover (%) as a function of time since last burn.
 # -----------------------------------------------------------------------------
 09_process_postfire_growth.py
 
 # -----------------------------------------------------------------------------
-# TBD -------------------------------------------------------------------------
+# Run regression models and use output to project future fire activity for
+# each ecoregion from 2021-2100
 # -----------------------------------------------------------------------------
-
 10_run_jags_models.py
 11_project_future_aab.py
 
 # -----------------------------------------------------------------------------
-# TBD -------------------------------------------------------------------------
+# Summarize model projections and monthly climate data for further analysis
 # -----------------------------------------------------------------------------
 12_summarize_aab_timeseries.py
 13_summarize_projected_metvars.py

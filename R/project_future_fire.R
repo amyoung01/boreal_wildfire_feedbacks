@@ -84,7 +84,7 @@ for (mdl in src) {
         aab_prev <- cbind(
           matrix(rep(aab_init, n_aab_init), ncol = n_aab_init),
           matrix(rep(aab, N), nrow = N, byrow = TRUE)
-          )
+        )
 
         aab_prev <- aab_prev[, seq_along(w)]
 
@@ -95,9 +95,7 @@ for (mdl in src) {
             # Update prior aab matrix to account for previous years projected
             # aab
             if (yr > pred_yrs[1]) {
-
                 aab_prev <- cbind(aab_prev[, -1], aab_pred_i)
-
             }
 
             # Set offset terms for current year
