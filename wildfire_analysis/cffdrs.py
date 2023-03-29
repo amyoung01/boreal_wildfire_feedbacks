@@ -415,6 +415,12 @@ def cffdrs_calc(
                 Fire weather index [unitless]
             dsr: float or numpy array of floats
                 Daily severity rating [unitless]
+    
+    Notes
+    -----
+    The first axis of any supplied numpy.ndarray is the time axis. For 
+    example, in 3D arrays this means that axis 0 represent time and axes 1 and 
+    2 represent the spatial dimensions (e.g., lat and lon).
     """
 
     # Create empty arrays to store cffdrs variables

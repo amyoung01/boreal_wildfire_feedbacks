@@ -34,6 +34,8 @@ warnings.filterwarnings('ignore',
                         message='invalid value encountered in intersection')
 warnings.filterwarnings('ignore',
                         message='invalid value encountered in unary_union')
+warnings.filterwarnings('ignore',
+                        message='FutureWarning: In a future version, `df.iloc[:, i] = newvals` will attempt to set the values inplace instead of always setting a new array. To retain the old behavior, use either `df[df.columns[i]] = newvals` or, if columns are non-unique, `df.isetitem(i, newvals)` df.loc[mask, col] = df.loc[mask, col].buffer(0)')
 
 # Set verbose to True to print out progress bar
 verbose = True
@@ -72,7 +74,7 @@ fire_size = firehx_shp.HECTARES.values
 export_dict = {"fire_yr": [],
             "ecos": [],
             "area_burned_km2": [],
-            "time_since_fire": [],
+            "time_of_last_fire": [],
             "tree_cover_mean": []}
 
 # Total number of fire permiters to process
@@ -145,7 +147,9 @@ with tqdm(total=N,disable=not verbose) as pbar:
 
             export_dict["fire_yr"].append(fire_yr[i])
             export_dict["ecos"].append(ecos_id)
-            export_dict["time_since_fire"].append(treecov_yr[j] - fire_yr[i])
+            export_dict["time_of_last_fire"].append(
+                0 - (treecov_yr[j] - fire_yr[i])
+                )
             export_dict["area_burned_km2"].append(area_burned)
 
             mod44b_path = root_dir / '../data/processed/veg/mod44b'
@@ -172,7 +176,7 @@ with tqdm(total=N,disable=not verbose) as pbar:
 
 # Export recorded time since fire and tree cover values into csv file
 export_df = pd.DataFrame.from_dict(export_dict)
-export_fn = root_dir / '../data/dataframes/treecov_postfire.csv'
+export_fn = root_dir / '../data/dataframes/modis_treecover_postfire.csv'
 export_df.to_csv(export_fn, index=False)
 
 # Don't automatically run when imported into another script
